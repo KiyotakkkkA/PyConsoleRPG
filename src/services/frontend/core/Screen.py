@@ -1,0 +1,195 @@
+from typing import List, Dict, Callable, Set
+from .Component import Component
+from src.services.output import Color
+from src.services.output.WinConsole import WinConsole
+from src.services.events import EventListener
+from src.services.events.KeyListener import KeyListener, Keys
+
+class ScreenPixel:
+    """
+    Класс, представляющий пиксель на экране
+    """
+    def __init__(self, char: str = " ", fg_color: str = Color.WHITE, bg_color: str = Color.RESET):
+        self.char = char
+        self.fg_color = fg_color
+        self.bg_color = bg_color
+        
+    def __str__(self) -> str:
+        return f"{self.bg_color}{self.fg_color}{self.char}{Color.RESET}"
+    
+    def copy(self) -> 'ScreenPixel':
+        return ScreenPixel(self.char, self.fg_color, self.bg_color)
+
+class Screen(EventListener):
+    """
+    Класс, представляющий экран
+    """
+    def __init__(self):
+        super().__init__()
+        self.win_console = WinConsole()
+        self.width = self.win_console.width
+        self.height = self.win_console.height
+        
+        self.front_buffer: List[List[ScreenPixel]] = [[ScreenPixel() for _ in range(self.width)] for _ in range(self.height)]
+        self.back_buffer: List[List[ScreenPixel]] = [[ScreenPixel() for _ in range(self.width)] for _ in range(self.height)]
+        
+        self.children: List[Component] = []
+        self.is_active = True
+        self.performance_vision = False
+        self.performance_checker = None
+        
+        self.key_handlers: Dict[Keys, Set[Callable]] = {}
+        
+        self.init()
+        
+        KeyListener().register_screen(self)
+        
+    def init(self):
+        pass
+        
+    def enable_performance_monitor(self, enable=True):
+        """
+        Включение или выключение отображения монитора производительности
+        
+        Args:
+            enable: True для включения, False для выключения
+        """
+        from src.services.frontend.ui.utils import PerformanceChecker
+        
+        self.performance_vision = enable
+        
+        if enable and self.performance_checker is None:
+            self.performance_checker = PerformanceChecker(0, 0, 30, 5)
+
+    
+    def update(self):
+        pass
+    
+    def quit(self):
+        self.is_active = False
+        
+    def on_key_press(self, key: Keys) -> None:
+        """
+        Обработка нажатия клавиши
+        
+        Args:
+            key: Нажатая клавиша из перечисления Keys
+        """
+        self.emit_event('key_press', {'key': key})
+        
+        if key in self.key_handlers:
+            for handler in self.key_handlers[key]:
+                handler()
+                
+        for child in self.children:
+            if hasattr(child, 'on_key_press') and callable(child.on_key_press):
+                child.on_key_press(key)
+    
+    def bind_key(self, key: Keys, handler: Callable) -> None:
+        """
+        Привязка обработчика к нажатию клавиши
+        
+        Args:
+            key: Клавиша из перечисления Keys
+            handler: Функция-обработчик
+        """
+        if key not in self.key_handlers:
+            self.key_handlers[key] = set()
+        self.key_handlers[key].add(handler)
+    
+    def unbind_key(self, key: Keys, handler: Callable) -> None:
+        """
+        Отвязка обработчика от нажатия клавиши
+        
+        Args:
+            key: Клавиша из перечисления Keys
+            handler: Функция-обработчик
+        """
+        if key in self.key_handlers and handler in self.key_handlers[key]:
+            self.key_handlers[key].remove(handler)
+        
+    def add_child(self, child: Component) -> None:
+        self.children.append(child)
+        
+    def unbind_child(self, child: Component) -> None:
+        self.children.remove(child)
+    
+    def clear_buffer(self, buffer: List[List[ScreenPixel]], char: str = " ", fg_color: str = Color.WHITE, bg_color: str = Color.RESET) -> None:
+        """Очистка буфера и установка значений по умолчанию"""
+        for y in range(self.height):
+            for x in range(self.width):
+                buffer[y][x].char = char
+                buffer[y][x].fg_color = fg_color
+                buffer[y][x].bg_color = bg_color
+    
+    def set_pixel(self, x: int, y: int, char: str, fg_color: str = Color.WHITE, bg_color: str = Color.RESET) -> None:
+        """Установка пикселя в back_buffer"""
+        if 0 <= x < self.width and 0 <= y < self.height:
+            self.back_buffer[y][x].char = char
+            self.back_buffer[y][x].fg_color = fg_color
+            self.back_buffer[y][x].bg_color = bg_color
+    
+    def draw_rectangle(self, x: int, y: int, width: int, height: int, char: str = "█", fg_color: str = Color.WHITE, bg_color: str = Color.RESET) -> None:
+        """Отрисовка прямоугольника в back_buffer"""
+        for cy in range(max(0, y), min(self.height, y + height)):
+            for cx in range(max(0, x), min(self.width, x + width)):
+                self.set_pixel(cx, cy, char, fg_color, bg_color)
+    
+    def draw_text(self, x: int, y: int, text: str, fg_color: str = Color.WHITE, bg_color: str = Color.RESET) -> None:
+        """Отрисовка текста в back_buffer"""
+        for i, char in enumerate(text):
+            if x + i < self.width:
+                self.set_pixel(x + i, y, char, fg_color, bg_color)
+    
+    def swap_buffers(self) -> None:
+        """Обмен буферов и отрисовка front_buffer"""
+        for y in range(self.height):
+            for x in range(self.width):
+                self.front_buffer[y][x].char = self.back_buffer[y][x].char
+                self.front_buffer[y][x].fg_color = self.back_buffer[y][x].fg_color
+                self.front_buffer[y][x].bg_color = self.back_buffer[y][x].bg_color
+    
+    def render(self) -> None:
+        """Отрисовка front_buffer на экран с использованием оптимизированного метода WinConsole"""
+        self.win_console.set_cursor_position(0, 0)
+        self.win_console.set_cursor_visibility(False)
+        
+        self.win_console.write_output_buffer(self.front_buffer, self.width, self.height)
+        
+
+    def _update(self) -> None:
+        """Обновление экрана: сначала отрисовка в back_buffer, затем swap и render"""
+        KeyListener().update()
+        
+        self.clear_buffer(self.back_buffer) 
+        
+        self.update()
+        
+        for child in self.children:
+            child.draw(self)
+            
+        if self.performance_vision and self.performance_checker is not None:
+            self.performance_checker.update()
+            self.performance_checker.draw(self)
+        
+        self.swap_buffers()
+        self.render()
+    
+    def draw(self) -> None:
+        """Основной цикл отрисовки с использованием WinAPI"""
+        try:
+            self.win_console.clear_screen()
+            self.win_console.set_cursor_visibility(False)
+            
+            while self.is_active:
+                self._update()
+        finally:
+            self.win_console.set_cursor_visibility(True)
+            
+    def get_w(self) -> int:
+        return self.width
+    
+    def get_h(self) -> int:
+        return self.height
+        
+            
