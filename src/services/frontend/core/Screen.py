@@ -61,7 +61,6 @@ class Screen(EventListener):
         if enable and self.performance_checker is None:
             self.performance_checker = PerformanceChecker(0, 0, 30, 5)
 
-    
     def update(self):
         pass
     
