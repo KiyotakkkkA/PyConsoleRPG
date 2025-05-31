@@ -45,9 +45,9 @@ class MainScene(Screen):
         self.add_child(self.menu)
         
         self.menu.add_items([
-            (("Начать игру", Color.WHITE), Keys.N, lambda: MainScene.start_game()),
+            (("Новая игра", Color.WHITE), Keys.N, lambda: MainScene.start_game()),
             (("Загрузить игру", Color.WHITE), Keys.L, lambda: print("Загрузить игру")),
-            (("Настройки", Color.WHITE), Keys.S, lambda: print("Настройки")),
+            (("Настройки", Color.WHITE), Keys.S, lambda: ScreenManager.set_current_screen("settings")),
             (("Управление", Color.WHITE), Keys.C, lambda: print("Управление")),
             (("Выход", Color.WHITE), Keys.Q, lambda: MainScene.exit()),
         ])

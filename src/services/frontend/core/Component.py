@@ -165,10 +165,10 @@ class Component(Computable):
         self.width = width
         
     def set_x(self, x: int):
-        self.x = x
+        self.abs_x = x
         
     def set_y(self, y: int):
-        self.y = y
+        self.abs_y = y
     
     def on_key_press(self, key: Keys) -> None:
         """
@@ -224,14 +224,6 @@ class Component(Computable):
                 self.height = child.abs_y + self.paddings[0] + child.height - self.abs_y + self.paddings[1]
             if child.abs_x + self.paddings[3] + child.width >= self.abs_x + self.width:
                 self.width = child.abs_x + self.paddings[3] + child.width - self.abs_x + self.paddings[2]
-                
-    def relative_with_parent(self):
-        """
-        Вычисление абсолютных координат компонента относительно родительского
-        """
-        if self.parent is not None:
-            self.abs_x = self.x + self.parent.abs_x + self.parent.paddings[3]
-            self.abs_y = self.y + self.parent.abs_y + self.parent.paddings[0]
 
     def mark_changed(self):
         """Отмечает компонент как измененный и все связанные компоненты"""

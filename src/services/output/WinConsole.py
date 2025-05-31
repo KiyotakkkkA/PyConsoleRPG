@@ -2,10 +2,11 @@ import ctypes
 from ctypes import wintypes
 import re
 import time
-import curses
-import pygame
-from pygame import Surface, Color as PygameColor
 from src.services.output import Color
+from typing import TYPE_CHECKING, List
+
+if TYPE_CHECKING:
+    from src.services.frontend.core import ScreenPixel
 
 kernel32 = ctypes.windll.kernel32
 
@@ -105,7 +106,6 @@ ANSI_TO_WIN_COLOR = {
 
 class WinConsole:
     color_attr_cache = {}
-    pygame_color_cache = {}
     
     def __init__(self):
         self.handle = kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
@@ -123,59 +123,12 @@ class WinConsole:
         self.width = csbi.dwSize.X
         self.height = csbi.dwSize.Y
         
-        pygame.init()
-        pygame.display.init()
-        self.surface = Surface((self.width, self.height))
-        self.surface.fill((0, 0, 0))
-        
         self.prev_buffer = None
         
         self.target_fps = 30
         self.last_frame_time = time.time()
         
-        self.use_curses = False
-        self.curses_initialized = False
         self.stdscr = None
-        
-    def init_curses(self):
-        """Инициализация curses"""
-        if not self.curses_initialized:
-            try:
-                self.stdscr = curses.initscr()
-                
-                curses.start_color()
-                curses.use_default_colors()
-                curses.curs_set(0)
-                self.stdscr.keypad(False)
-                curses.noecho()
-                curses.cbreak()
-                curses.halfdelay(1)
-                
-                for i in range(1, 16):
-                    curses.init_pair(i, i % 8, (i // 8) * 8)
-                
-                self.curses_initialized = True
-                return True
-            except Exception:
-                if self.curses_initialized:
-                    self.cleanup_curses()
-            self.use_curses = False
-            handle = kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
-            kernel32.SetConsoleMode(handle, ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
-            return False
-        return self.curses_initialized
-    
-    def cleanup_curses(self):
-        """Освобождение ресурсов curses и восстановление настроек терминала"""
-        if self.curses_initialized:
-            curses.nocbreak()
-            self.stdscr.keypad(False)
-            curses.echo()
-            curses.endwin()
-            self.curses_initialized = False
-            
-            handle = kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
-            kernel32.SetConsoleMode(handle, ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
         
     def get_console_size(self):
         """Получение размеров консоли"""
@@ -237,32 +190,6 @@ class WinConsole:
             else:
                 win_code = ANSI_TO_WIN_COLOR[bg_color] & 0x0F
                 bg_attr = win_code << 4
-        
-        if isinstance(fg_color, str) and '|' in fg_color:
-            for part in fg_color.split('|'):
-                part = part.strip()
-                if part in ANSI_TO_WIN_COLOR:
-                    if 'BG_' in part:
-                        win_code = ANSI_TO_WIN_COLOR[part]
-                        if win_code < 16:
-                            bg_attr |= win_code << 4
-                        else:
-                            bg_attr |= win_code
-                    else:
-                        text_attr = ANSI_TO_WIN_COLOR[part] & 0x0F
-        
-        if isinstance(bg_color, str) and '|' in bg_color:
-            for part in bg_color.split('|'):
-                part = part.strip()
-                if part in ANSI_TO_WIN_COLOR:
-                    if 'BG_' in part:
-                        win_code = ANSI_TO_WIN_COLOR[part]
-                        if win_code < 16:
-                            bg_attr |= win_code << 4
-                        else:
-                            bg_attr |= win_code
-                    else:
-                        text_attr = ANSI_TO_WIN_COLOR[part] & 0x0F
         
         if hasattr(fg_color, 'code'):
             code_str = fg_color.code
@@ -331,77 +258,6 @@ class WinConsole:
             wintypes._COORD(0, 0),
             ctypes.byref(rect)
         )
-        
-    def ansi_to_pygame_color(self, color_code):
-        """Преобразование ANSI-цвета в цвет PyGame"""
-        if color_code in self.__class__.pygame_color_cache:
-            return self.__class__.pygame_color_cache[color_code]
-        
-        color_map = {
-            Color.BLACK: (0, 0, 0),
-            Color.RED: (170, 0, 0),
-            Color.GREEN: (0, 170, 0),
-            Color.YELLOW: (170, 85, 0),
-            Color.BLUE: (0, 0, 170),
-            Color.MAGENTA: (170, 0, 170),
-            Color.CYAN: (0, 170, 170),
-            Color.WHITE: (170, 170, 170),
-            
-            Color.BG_BLACK: (0, 0, 0),
-            Color.BG_RED: (170, 0, 0),
-            Color.BG_GREEN: (0, 170, 0),
-            Color.BG_YELLOW: (170, 85, 0),
-            Color.BG_BLUE: (0, 0, 170),
-            Color.BG_MAGENTA: (170, 0, 170),
-            Color.BG_CYAN: (0, 170, 170),
-            Color.BG_WHITE: (170, 170, 170),
-            
-            Color.BRIGHT_BLACK: (85, 85, 85),
-            Color.BRIGHT_RED: (255, 85, 85),
-            Color.BRIGHT_GREEN: (85, 255, 85),
-            Color.BRIGHT_YELLOW: (255, 255, 85),
-            Color.BRIGHT_BLUE: (85, 85, 255),
-            Color.BRIGHT_MAGENTA: (255, 85, 255),
-            Color.BRIGHT_CYAN: (85, 255, 255),
-            Color.BRIGHT_WHITE: (255, 255, 255),
-            
-            Color.BG_BRIGHT_BLACK: (85, 85, 85),
-            Color.BG_BRIGHT_RED: (255, 85, 85),
-            Color.BG_BRIGHT_GREEN: (85, 255, 85),
-            Color.BG_BRIGHT_YELLOW: (255, 255, 85),
-            Color.BG_BRIGHT_BLUE: (85, 85, 255),
-            Color.BG_BRIGHT_MAGENTA: (255, 85, 255),
-            Color.BG_BRIGHT_CYAN: (85, 255, 255),
-            Color.BG_BRIGHT_WHITE: (255, 255, 255),
-            
-            Color.RESET: (0, 0, 0),
-        }
-        
-        if color_code in color_map:
-            result = color_map[color_code]
-            self.__class__.pygame_color_cache[color_code] = result
-            return result
-        
-        if isinstance(color_code, str) and '|' in color_code:
-            parts = color_code.split('|')
-            for part in parts:
-                part = part.strip()
-                if part in color_map:
-                    result = color_map[part]
-                    self.__class__.pygame_color_cache[color_code] = result
-                    return result
-        
-        if hasattr(color_code, 'code'):
-            for color_name, color_obj in vars(Color).items():
-                if not isinstance(color_obj, type) and hasattr(color_obj, 'code'):
-                    if color_obj.code in color_code.code and color_obj in color_map:
-                        result = color_map[color_obj]
-                        self.__class__.pygame_color_cache[color_code] = result
-                        return result
-        
-        default_color = (170, 170, 170) if not str(color_code).startswith('BG_') else (0, 0, 0)
-        self.__class__.pygame_color_cache[color_code] = default_color
-        return default_color
     
     def optimize_frame_rate(self):
         """Ограничение частоты кадров для предотвращения излишнего рендеринга"""
@@ -414,54 +270,12 @@ class WinConsole:
             
         self.last_frame_time = time.time()
     
-    def write_output_buffer(self, buffer, width, height):
-        """Запись всего буфера в консоль за один вызов с использованием curses"""
+    def write_output_buffer(self, buffer: List[List['ScreenPixel']], width: int, height: int):
+        """Запись всего буфера в консоль за один вызов"""
         if not buffer or width <= 0 or height <= 0:
             return
         
         self.optimize_frame_rate()
-        
-        if self.use_curses and not self.curses_initialized:
-            if not self.init_curses():
-                handle = kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
-                kernel32.SetConsoleMode(handle, ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
-        
-        if self.use_curses and self.curses_initialized:
-            try:
-                changed_coords = []
-                if self.prev_buffer is None:
-                    for y in range(min(height, len(buffer))):
-                        for x in range(min(width, len(buffer[y]))):
-                            changed_coords.append((x, y))
-                else:
-                    for y in range(min(height, len(buffer))):
-                        for x in range(min(width, len(buffer[y]))):
-                            if (y >= len(self.prev_buffer) or 
-                                x >= len(self.prev_buffer[y]) or 
-                                buffer[y][x] != self.prev_buffer[y][x]):
-                                changed_coords.append((x, y))
-                
-                for x, y in changed_coords:
-                    if y < len(buffer) and x < len(buffer[y]):
-                        pixel = buffer[y][x]
-                        
-                        fg_color = pixel.fg_color
-                        bg_color = pixel.bg_color if pixel.bg_color != Color.RESET and pixel.bg_color != '' else Color.BG_BLACK
-                        
-                        attr = self.ansi_to_curses_attr(fg_color, bg_color)
-                        
-                        try:
-                            self.stdscr.addch(y, x, ord(pixel.char), attr)
-                        except curses.error:
-                            pass
-                
-                self.stdscr.refresh()
-                
-                self.prev_buffer = [row[:] for row in buffer]
-                return
-            except Exception:
-                self.cleanup_curses()
-                self.use_curses = False
         
         char_buffer = (CHAR_INFO * (width * height))()
         
@@ -469,6 +283,7 @@ class WinConsole:
             for x in range(width):
                 if y < len(buffer) and x < len(buffer[y]):
                     idx = y * width + x
+                    
                     pixel = buffer[y][x]
                     char_buffer[idx].Char.UnicodeChar = pixel.char
                     
@@ -489,95 +304,3 @@ class WinConsole:
         )
         
         self.prev_buffer = [row[:] for row in buffer]
-
-    def ansi_to_curses_attr(self, fg_color, bg_color):
-        """Преобразование ANSI-цветов в атрибуты curses"""
-        cache_key = (str(fg_color), str(bg_color))
-        
-        if cache_key in self.__class__.color_attr_cache:
-            return self.__class__.color_attr_cache[cache_key]
-        
-        fg_map = {
-            Color.BLACK: curses.COLOR_BLACK,
-            Color.RED: curses.COLOR_RED,
-            Color.GREEN: curses.COLOR_GREEN,
-            Color.YELLOW: curses.COLOR_YELLOW,
-            Color.BLUE: curses.COLOR_BLUE,
-            Color.MAGENTA: curses.COLOR_MAGENTA,
-            Color.CYAN: curses.COLOR_CYAN,
-            Color.WHITE: curses.COLOR_WHITE,
-            Color.BRIGHT_BLACK: curses.COLOR_BLACK + 8,
-            Color.BRIGHT_RED: curses.COLOR_RED + 8,
-            Color.BRIGHT_GREEN: curses.COLOR_GREEN + 8,
-            Color.BRIGHT_YELLOW: curses.COLOR_YELLOW + 8,
-            Color.BRIGHT_BLUE: curses.COLOR_BLUE + 8,
-            Color.BRIGHT_MAGENTA: curses.COLOR_MAGENTA + 8,
-            Color.BRIGHT_CYAN: curses.COLOR_CYAN + 8,
-            Color.BRIGHT_WHITE: curses.COLOR_WHITE + 8,
-        }
-        
-        bg_map = {
-            Color.BG_BLACK: curses.COLOR_BLACK,
-            Color.BG_RED: curses.COLOR_RED,
-            Color.BG_GREEN: curses.COLOR_GREEN,
-            Color.BG_YELLOW: curses.COLOR_YELLOW,
-            Color.BG_BLUE: curses.COLOR_BLUE,
-            Color.BG_MAGENTA: curses.COLOR_MAGENTA,
-            Color.BG_CYAN: curses.COLOR_CYAN,
-            Color.BG_WHITE: curses.COLOR_WHITE,
-            Color.BG_BRIGHT_BLACK: curses.COLOR_BLACK + 8,
-            Color.BG_BRIGHT_RED: curses.COLOR_RED + 8,
-            Color.BG_BRIGHT_GREEN: curses.COLOR_GREEN + 8,
-            Color.BG_BRIGHT_YELLOW: curses.COLOR_YELLOW + 8,
-            Color.BG_BRIGHT_BLUE: curses.COLOR_BLUE + 8,
-            Color.BG_BRIGHT_MAGENTA: curses.COLOR_MAGENTA + 8,
-            Color.BG_BRIGHT_CYAN: curses.COLOR_CYAN + 8,
-            Color.BG_BRIGHT_WHITE: curses.COLOR_WHITE + 8,
-        }
-        
-        fg = curses.COLOR_WHITE
-        bg = curses.COLOR_BLACK
-        attr = 0
-        if fg_color in fg_map:
-            fg = fg_map[fg_color]
-        elif isinstance(fg_color, str) and '|' in fg_color:
-            for part in fg_color.split('|'):
-                part = part.strip()
-                if part in fg_map:
-                    fg = fg_map[part]
-        elif hasattr(fg_color, 'code'):
-            for color_name, color_obj in vars(Color).items():
-                if not isinstance(color_obj, type) and hasattr(color_obj, 'code'):
-                    if color_obj.code in fg_color.code and color_obj in fg_map:
-                        fg = fg_map[color_obj]
-        
-        if bg_color in bg_map:
-            bg = bg_map[bg_color]
-        elif isinstance(bg_color, str) and '|' in bg_color:
-            for part in bg_color.split('|'):
-                part = part.strip()
-                if part in bg_map:
-                    bg = bg_map[part]
-        elif hasattr(bg_color, 'code'):
-            for color_name, color_obj in vars(Color).items():
-                if not isinstance(color_obj, type) and hasattr(color_obj, 'code'):
-                    if color_obj.code in bg_color.code and color_obj in bg_map:
-                        bg = bg_map[color_obj]
-        
-        pair_num = (fg % 8) + ((bg % 8) * 8)
-        if pair_num == 0:
-            pair_num = 1
-        
-        attr = curses.color_pair(pair_num)
-        
-        if fg >= 8 or bg >= 8:
-            attr |= curses.A_BOLD
-        
-        self.__class__.color_attr_cache[cache_key] = attr
-        
-        return attr
-    
-    def __del__(self):
-        """Освобождение ресурсов при уничтожении объекта"""
-        if hasattr(self, 'curses_initialized') and self.curses_initialized:
-            self.cleanup_curses()

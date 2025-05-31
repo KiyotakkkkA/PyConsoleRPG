@@ -1,4 +1,4 @@
-from .Screen import Screen
+from .Screen import Screen, ScreenPixel
 from .Component import Component
 from .Format import Alignment
 from .ScreenManager import ScreenManager
@@ -8,4 +8,5 @@ __all__ = [
     "Component",
     "Alignment",
     "ScreenManager",
+    "ScreenPixel",
 ]

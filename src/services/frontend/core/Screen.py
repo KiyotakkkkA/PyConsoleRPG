@@ -4,21 +4,11 @@ from src.services.output import Color
 from src.services.output.WinConsole import WinConsole
 from src.services.events import EventListener
 from src.services.events.KeyListener import KeyListener, Keys
+from .ScreenPixel import ScreenPixel
 
-class ScreenPixel:
-    """
-    Класс, представляющий пиксель на экране
-    """
-    def __init__(self, char: str = " ", fg_color: str = Color.WHITE, bg_color: str = Color.RESET):
-        self.char = char
-        self.fg_color = fg_color
-        self.bg_color = bg_color
-        
-    def __str__(self) -> str:
-        return f"{self.bg_color}{self.fg_color}{self.char}{Color.RESET}"
-    
-    def copy(self) -> 'ScreenPixel':
-        return ScreenPixel(self.char, self.fg_color, self.bg_color)
+
+def hash_screen_pixel(char: str, fg_color: str, bg_color: str) -> int:
+    return hash((char, fg_color, bg_color))
 
 class Screen(EventListener):
     """
@@ -136,9 +126,16 @@ class Screen(EventListener):
     
     def draw_text(self, x: int, y: int, text: str, fg_color: str = Color.WHITE, bg_color: str = Color.RESET) -> None:
         """Отрисовка текста в back_buffer"""
-        for i, char in enumerate(text):
-            if x + i < self.width:
-                self.set_pixel(x + i, y, char, fg_color, bg_color)
+        # Проверяем, содержит ли текст специальные иконки
+        if not text:
+            return
+        
+        # Используем простой вывод, символ за символом, каждый символ в своей ячейке
+        cursor_pos = 0
+        for char in text:
+            if x + cursor_pos < self.width:
+                self.set_pixel(x + cursor_pos, y, char, fg_color, bg_color)
+                cursor_pos += 1
     
     def swap_buffers(self) -> None:
         """Обмен буферов и отрисовка front_buffer"""

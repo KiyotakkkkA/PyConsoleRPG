@@ -1,3 +1,6 @@
 colorama==0.4.6
 pygame==2.5.2
 windows-curses==2.4.1
+pyautogui==0.9.54
+rich==13.5.0
+wcwidth==0.2.13

@@ -31,7 +31,8 @@ class Tab(Component):
                  paddings: Tuple[int, int, int, int] = (1, 1, 1, 1),
                  inactive_tab_color: str = Color.RESET,
                  active_tab_color: str = Color.WHITE,
-                 control_keys: Tuple[int, int] = (Keys.LEFT, Keys.RIGHT)):
+                 control_keys: Tuple[int, int] = (Keys.LEFT, Keys.RIGHT),
+                 border_color: str = Color.RESET):
         """
         Инициализация компонента Таб
         
@@ -44,6 +45,7 @@ class Tab(Component):
             inactive_tab_color: Цвет неактивного таба
             active_tab_color: Цвет активного таба
             control_keys: Ключи для навигации
+            border_color: Цвет рамки
         """
         super().__init__(x, y, width, height, paddings)
         
@@ -53,11 +55,14 @@ class Tab(Component):
         
         self.reactive('inactive_tab_color', inactive_tab_color)
         self.reactive('active_tab_color', active_tab_color)
+        self.reactive('border_color', border_color)
         
         self.reactive('control_keys', control_keys)
         
-        self.bind_key(self.control_keys[0], self.move_left)
-        self.bind_key(self.control_keys[1], self.move_right)
+        if self.control_keys[0]:
+            self.bind_key(self.control_keys[0], self.move_left)
+        if self.control_keys[1]:
+            self.bind_key(self.control_keys[1], self.move_right)
         
     def move_left(self):
         self.active_index = (self.active_index - 1) % len(self.tabs)
@@ -86,7 +91,8 @@ class Tab(Component):
         tab_item.panel.height = self.height - self.paddings[1] - self.paddings[2] - 1
         tab_item.panel.border_color = Color.BLACK
         
-        self.bind_key(key, lambda: self.move_with_key(key))
+        if key:
+            self.bind_key(key, lambda: self.move_with_key(key))
         
     def add_tabs(self, tabs: List[Tuple[str, Panel, int]]):
         for tab in tabs:
@@ -96,7 +102,7 @@ class Tab(Component):
         self.calculate()
         gap = self.width // (len(self.tabs) + 1)
         
-        screen.draw_text(self.x + self.paddings[3], self.y + self.paddings[0], '─' * (self.width - self.paddings[2] - self.paddings[3]), Color.WHITE, Color.RESET)
+        screen.draw_text(self.x + self.paddings[3], self.y + self.paddings[0], '─' * (self.width - self.paddings[2] - self.paddings[3]), self.border_color, Color.RESET)
         
         for i, tab in enumerate(self.tabs):
             screen.draw_text(self.x + self.paddings[3] + gap * (i + 1), self.y + self.paddings[0], f"{tab.name} [{KEYS_CODES_NAME[tab.key.value]}]", 
