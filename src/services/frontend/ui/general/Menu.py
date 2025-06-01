@@ -24,9 +24,9 @@ class MenuItem:
 class Menu(Component):
     def __init__(self, x: int,
                  y: int,
-                 height: int,
-                 paddings: Tuple[int, int, int, int] = (1, 1, 1, 1),
+                 paddings: Tuple[int, int, int, int] = (1, 10, 1, 1),
                  gap: int = 1,
+                 is_active: bool = False,
                  inactive_menu_color: str = Color.RESET,
                  active_menu_color: str = Color.YELLOW,
                  control_keys: Tuple[int, int, int] = (Keys.UP, Keys.DOWN, Keys.ENTER),
@@ -37,18 +37,16 @@ class Menu(Component):
         Args:
             x: Координата x
             y: Координата y
-            width: Ширина
-            height: Высота
-            paddings: Отступы
+            paddings: Отступы (pt, pb, pr, pl)
             gap: Расстояние между пунктами меню
             inactive_menu_color: Цвет неактивного пункта меню
             active_menu_color: Цвет активного пункта меню
             control_keys: Ключи для навигации
             alignment: Выравнивание пунктов меню
         """
-        super().__init__(x, y, 0, height, paddings)
+        super().__init__(x, y, 0, 0, paddings)
         
-        self.reactive('active_index', 0)
+        self.reactive('active_index', -1)
         self.reactive('items', [])
         self.reactive('keys_to_item_indexes', {})
         
@@ -57,27 +55,55 @@ class Menu(Component):
         self.reactive('active_menu_color', active_menu_color)
         self.reactive('control_keys', control_keys)
         self.reactive('alignment', alignment)
+        self.reactive('is_active', is_active)
         
         self.bind_key(self.control_keys[0], self.move_up)
         self.bind_key(self.control_keys[1], self.move_down)
         self.bind_key(self.control_keys[2], self.execute_action)
         
+    def set_active(self, active: bool):
+        """Установка активности меню"""
+        self.is_active = active
+        
+    def flush_selection(self):
+        """Сброс выбора"""
+        self.active_index = -1
+        
+    def set_selection(self, index: int):
+        """Установка выбора"""
+        if self.items:
+            self.active_index = index % len(self.items)
+        
     def execute_action(self):
-        if self.active_index >= 0:
+        if not self.is_active:
+            return
+        
+        if self.items and self.active_index >= 0:
             self.items[self.active_index].action()
         else:
             self.items[len(self.items) - abs(self.active_index)].action()
         
     def move_with_key(self, key: int):
-        if key in self.keys_to_item_indexes:
+        if not self.is_active:
+            return
+        
+        if self.items and key in self.keys_to_item_indexes:
             self.active_index = self.keys_to_item_indexes[key]
             self.execute_action()
         
     def move_up(self):
-        self.active_index = (self.active_index - 1) % len(self.items)
+        if not self.is_active:
+            return
+        
+        if self.items:
+            self.active_index = (self.active_index - 1) % len(self.items)
             
     def move_down(self):
-        self.active_index = (self.active_index + 1) % len(self.items)
+        if not self.is_active:
+            return
+        
+        if self.items:
+            self.active_index = (self.active_index + 1) % len(self.items)
             
     def add_item(self, text: tuple[str, str], key: int, action: Callable[[], None]):
         """
@@ -90,6 +116,7 @@ class Menu(Component):
         """
         
         self.width = max(len(text[0]), self.calculate_width())
+        self.height = self.paddings[0] + self.gap * len(self.items) + self.paddings[2]
         
         element_x = self.x + self.paddings[3]
         
@@ -102,8 +129,8 @@ class Menu(Component):
         
         menu_item = MenuItem(
             text=Text(x=element_x,
-                      y=self.y + self.paddings[0] + self.gap * len(self.items),
-                      text=f"{text[0]} [{KEYS_CODES_NAME[key.value]}]",
+                      y=self.y + self.paddings[0] + 1 + self.gap * len(self.items),
+                      text=f"{text[0]} {'[' + KEYS_CODES_NAME[key.value] + ']' if key else ''}",
                       fg_color=text[1]),
             key=key,
             action=action
@@ -119,7 +146,8 @@ class Menu(Component):
                 item.text.x = self.x + (self.width // 2) - (len(item.text.text) // 2 + 1)
         
         self.keys_to_item_indexes[key] = len(self.items) - 1
-        self.bind_key(key, lambda: self.move_with_key(key))
+        if key:
+            self.bind_key(key, lambda: self.move_with_key(key))
         
     def add_items(self, items: list[tuple[str, tuple[str, str], int, Callable[[], None]]]):
         """
@@ -131,6 +159,17 @@ class Menu(Component):
         for item in items:
             self.add_item(*item)
             
+    def set_items(self, items: list[tuple[str, tuple[str, str], int, Callable[[], None]]]):
+        """
+        Установка нескольких пунктов меню
+        
+        Args:
+            items: Список кортежей (Название пункта меню, Текст, Цвет текста, Клавиша, Действие)
+        """
+        self.items = []
+        self.keys_to_item_indexes = {}
+        self.add_items(items)
+            
     def calculate_width(self):
         return max([len(item.text.text) for item in self.items]) if self.items else 0
             
@@ -139,8 +178,8 @@ class Menu(Component):
             
     def draw(self, screen: 'Screen') -> None:
         self.calculate()
-        for item in self.items:
-            if self.active_index == self.keys_to_item_indexes[item.key]:
+        for i, item in enumerate(self.items):
+            if self.active_index == i:
                 item.text.fg_color = self.active_menu_color
             else:
                 item.text.fg_color = self.inactive_menu_color

@@ -8,6 +8,7 @@ class ScreenManager:
     """
     _screens: Dict[str, 'Screen'] = {}
     _current_screen: Optional[str] = None
+    _current_screen_instance: Optional['Screen'] = None
 
     @classmethod
     def add_screen(cls, name: str, screen: 'Screen'):
@@ -39,7 +40,7 @@ class ScreenManager:
             name: Имя экрана
         """
         if name in cls._screens:
-            KeyListener().unregister_screen(cls._screens[name])
+            KeyListener().unregister_screen(cls._screens[name].get_instance())
             del cls._screens[name]
         
     @classmethod
@@ -53,6 +54,7 @@ class ScreenManager:
         if cls._current_screen:
             cls.remove_screen(cls._current_screen)
         cls._current_screen = name
+        cls._current_screen_instance = cls._screens[name]()
         cls.draw()
         
     @classmethod
@@ -63,7 +65,7 @@ class ScreenManager:
         Returns:
             Экран
         """
-        return cls._screens[cls._current_screen]
+        return cls._current_screen_instance
             
     @classmethod
     def draw(cls):
@@ -71,4 +73,4 @@ class ScreenManager:
         Отрисовывает текущий экран
         """
         if cls._current_screen and cls._current_screen in cls._screens:
-            cls._screens[cls._current_screen].draw()
+            cls._current_screen_instance.draw()

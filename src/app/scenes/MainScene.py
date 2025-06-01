@@ -41,7 +41,7 @@ class MainScene(Screen):
         menu_x = self.get_w() // 2 - 2
         menu_y = self.title.y + self.title.height + 1
         
-        self.menu = Menu(menu_x, menu_y, 40, paddings=(1, 1, 1, 1), gap=2)
+        self.menu = Menu(menu_x, menu_y, paddings=(1, 1, 1, 1), gap=2)
         self.add_child(self.menu)
         
         self.menu.add_items([
@@ -51,8 +51,8 @@ class MainScene(Screen):
             (("Управление", Color.WHITE), Keys.C, lambda: print("Управление")),
             (("Выход", Color.WHITE), Keys.Q, lambda: MainScene.exit()),
         ])
-    
-    def update(self):
-        pass
+        
+        self.menu.set_selection(0)
+        self.menu.set_active(True)
         
         

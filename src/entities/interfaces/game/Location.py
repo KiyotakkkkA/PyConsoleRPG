@@ -1,8 +1,10 @@
 class Location:
     def __init__(self):
-        self.id = None
+        self._id = None
         self._name = None
         self._description = None
+        self._region = None
+        self._connections = []
         
     @property
     def id(self):
@@ -47,4 +49,15 @@ class Location:
     @region.setter
     def region(self, value):
         self._region = value
+        
+    @property
+    def connections(self):
+        """
+        Список доступных для перехода локаций
+        """
+        return self._connections
+    
+    @connections.setter
+    def connections(self, value):
+        self._connections = value
     

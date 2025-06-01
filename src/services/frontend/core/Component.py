@@ -117,6 +117,16 @@ class Component(Computable):
         else:
             self._components[f"{type(child).__name__}{State._components_counter}"] = child
             child.parent = self
+            
+    def set_child(self, child: 'Component', name: str = None):
+        """
+        Установка дочернего компонента
+        
+        Args:
+            child: Компонент, который будет установлен
+            name: Имя компонента
+        """
+        self._components[name] = child
         
     def unbind_child(self, child: 'Component'):
         """
@@ -220,10 +230,10 @@ class Component(Computable):
             child.y = child.abs_y + self.paddings[0]
             child.x = child.abs_x + self.paddings[3]
             
-            if child.abs_y + self.paddings[0] + child.height >= self.abs_y + self.height:
-                self.height = child.abs_y + self.paddings[0] + child.height - self.abs_y + self.paddings[1]
-            if child.abs_x + self.paddings[3] + child.width >= self.abs_x + self.width:
-                self.width = child.abs_x + self.paddings[3] + child.width - self.abs_x + self.paddings[2]
+            if child.abs_y + self.paddings[0] + self.paddings[1] + child.height >= self.abs_y + self.height:
+                self.height = child.abs_y + self.paddings[0] + self.paddings[1] + child.height - self.abs_y + self.paddings[2]
+            if child.abs_x + self.paddings[3] + self.paddings[2] + child.width >= self.abs_x + self.width:
+                self.width = child.abs_x + self.paddings[3] + self.paddings[2] + child.width - self.abs_x + self.paddings[2]
 
     def mark_changed(self):
         """Отмечает компонент как измененный и все связанные компоненты"""

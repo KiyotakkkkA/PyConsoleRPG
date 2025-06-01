@@ -14,6 +14,9 @@ class Screen(EventListener):
     """
     Класс, представляющий экран
     """
+    
+    _instances = {}
+    
     def __init__(self):
         super().__init__()
         self.win_console = WinConsole()
@@ -32,10 +35,22 @@ class Screen(EventListener):
         
         self.init()
         
+        self._instances[self.__class__.__name__] = self
+        
         KeyListener().register_screen(self)
         
     def init(self):
         pass
+    
+    @classmethod
+    def get_instance(cls):
+        """
+        Получение экземпляра экрана
+        
+        Returns:
+            Экземпляр экрана
+        """
+        return cls._instances.get(cls.__name__)
         
     def enable_performance_monitor(self, enable=True):
         """

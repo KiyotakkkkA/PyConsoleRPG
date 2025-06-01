@@ -1,10 +1,9 @@
 from src.services.frontend.core import Screen
 from src.services.frontend.ui.containers import Panel, Tab
-from src.services.frontend.ui.general import Text
+from src.services.frontend.ui.general import Text, Menu
 from src.services.frontend.core.Format import Alignment
 from src.services.events import Keys
 from src.services.output import Color
-from src.services.storage.State import State
 
 class GameScene(Screen):
     def __init__(self):
@@ -12,22 +11,79 @@ class GameScene(Screen):
         self.performance_vision = True
         
         self.bind_key(Keys.F1, self.toggle_performance_monitor)
-        self.bind_key(Keys.LEFT, self.toggle_active_root_panel)
-        self.bind_key(Keys.RIGHT, self.toggle_active_root_panel)
+        self.bind_key(Keys.LEFT, self.to_control_panel)
+        self.bind_key(Keys.RIGHT, self.to_main_panel)
+        
+    def game_move_to_location(self, location_id: str):
+        """
+        Перемещение игрока в указанную локацию
+        
+        Args:
+            location_id: ID локации
+        """
+        from src.Game import Game
+        Game.player.move_to_location(location_id)
+        
+        self.control_connections.set_selection(0)
     
     def toggle_performance_monitor(self):
         """Включение/выключение монитора производительности"""
         self.performance_vision = not self.performance_vision
         self.enable_performance_monitor(self.performance_vision)
         
-    def toggle_active_root_panel(self):
+    def to_control_panel(self):
         """Переключение активной корневой панели"""
-        self.main_panel.selected = not self.main_panel.selected
-        self.control_panel.selected = not self.control_panel.selected
+        self.main_panel.selected = False
+        self.action_panel.selected = True
+        self.control_connections.is_active = True
+        self.control_connections.set_selection(0)
+        
+    def to_main_panel(self):
+        """Переключение активной корневой панели"""
+        self.main_panel.selected = True
+        self.action_panel.selected = False
+        self.control_connections.is_active = False
+        self.control_connections.flush_selection()
         
     def set_control_panel(self): # Панель навигации
         control_panel_w = self.get_w() // 5
         self.control_panel = Panel(0, 0, control_panel_w, self.get_h(), " НАВИГАЦИЯ ", " ", Alignment.CENTER, border_color=Color.BRIGHT_BLACK, border_color_selected=Color.BRIGHT_YELLOW)
+        
+        actions_panel_y = self.control_panel.y + 2
+        self.action_panel = Panel(x=self.control_panel.x + 1,
+                              y=actions_panel_y,
+                              width=self.control_panel.width - 4,
+                              height=1,
+                              title=" Действия ",
+                              filler=" ",
+                              title_alignment=Alignment.LEFT,
+                              border_color=Color.BRIGHT_BLACK,
+                              border_color_selected=Color.BRIGHT_YELLOW,
+                              title_color=Color.YELLOW,
+                              auto_resize=True)
+        
+        self.control_connections = Menu(x=self.action_panel.x + 1,
+                                       y=self.action_panel.y,
+                                       inactive_menu_color=Color.BRIGHT_BLACK,
+                                       active_menu_color=Color.BRIGHT_CYAN,
+                                       alignment=Alignment.LEFT,
+                                       gap=1)
+        
+        self.player_panel_y = self.action_panel.y + self.action_panel.height + 1
+        self.player_panel = Panel(self.action_panel.x,
+                                  self.player_panel_y,
+                                  self.action_panel.width,
+                                  10,
+                                  " Персонаж ",
+                                  " ",
+                                  Alignment.LEFT,
+                                  border_color=Color.BRIGHT_BLACK,
+                                  border_color_selected=Color.BRIGHT_YELLOW,
+                                  title_color=Color.YELLOW)
+        
+        self.control_panel.add_child(self.action_panel)
+        self.action_panel.add_child(self.control_connections)
+        self.control_panel.add_child(self.player_panel)
         
     def set_main_panel(self): # Основная панель
         main_panel_w = self.get_w() * 4 // 5
@@ -37,19 +93,62 @@ class GameScene(Screen):
     def set_help_panel(self): # Панель помощи
         self.help_panel_height = 3
         self.help_panel_w = self.main_panel.width
-        self.help_panel = Panel(self.control_panel.get_width(), self.get_h() - self.help_panel_height, self.help_panel_w, self.help_panel_height, "", " ", Alignment.LEFT, border_color=Color.BRIGHT_BLACK)
+        self.help_panel = Panel(self.control_panel.get_width(), self.get_h() - self.help_panel_height, self.help_panel_w, self.help_panel_height, "", " ", Alignment.LEFT, border_color=Color.BRIGHT_BLACK, paddings=(1, 0, 0, 0))
         
         text = Text(self.help_panel.x + 1, self.help_panel.y, "↑↓: Навигация, Tab: Переключение вкладок, Enter: Подтвердить, Esc: Назад, F1: Монитор производительности, ←→: Переключение активных панелей", Color.BRIGHT_BLACK, Color.RESET)
         self.help_panel.add_child(text)
         
+    def set_connections_main(self): # Вкладка локации - Перемещения
+        from src.Game import Game
+        
+        connections = []
+        
+        gap = 1
+        for connection in Game.game_state["current_location_data"]()["connections"]:
+            connections.append(Text(self.main_connections.x + 1, self.main_connections.y + gap, connection["name"], Color.WHITE, Color.RESET))
+            gap += 1
+        
+        self.main_connections.set_children(connections)
+        
+    def set_connections_control(self):
+        from src.Game import Game
+        
+        connections = []
+        
+        for connection in Game.game_state["current_location_data"]()["connections"]:
+            connections.append(((f"Идти в: {connection['name']}", Color.WHITE), None, lambda conn=connection: self.game_move_to_location(conn['id'])))
+        
+        self.control_connections.set_items(connections)
+        
+    def set_player_panel(self): # Панель навигации - панель игрока
+        self.player_panel.set_y(self.action_panel.y + self.action_panel.height)
+        self.player_panel.set_height(self.control_panel.height - self.action_panel.height - 6)
+        
     def set_tab_location(self): # Вкладка локации
-        self.name_location = Text(self.tab1.x + 1, self.tab1.y + 3, '', Color.WHITE, Color.RESET)
-        self.name_region = Text(self.name_location.x + self.name_location.width + 1, self.name_location.y, '', Color.BRIGHT_GREEN, Color.RESET)
-        self.description_location = Text(self.tab1.x + 1, self.tab1.y + 5, '', Color.BRIGHT_BLACK, Color.RESET)
+        name_location_y = self.tab1.y + 3
+        self.name_location = Text(self.tab1.x + 1, name_location_y, '', Color.WHITE, Color.RESET)
+        
+        name_region_y = name_location_y
+        self.name_region = Text(self.name_location.x + self.name_location.width + 1, name_region_y, '', Color.BRIGHT_GREEN, Color.RESET)
+        
+        description_location_y = name_region_y + 2
+        self.description_location = Text(self.tab1.x + 1, description_location_y, '', Color.BRIGHT_BLACK, Color.RESET)
+        
+        self.main_connections = Panel(x=self.tab1.x + 1,
+                                y=description_location_y + 2,
+                                width=self.tab1.width - 2,
+                                height=10,
+                                title="Все переходы:",
+                                filler=" ",
+                                title_alignment=Alignment.LEFT,
+                                border_color=Color.BLACK,
+                                border_color_selected=Color.BLACK,
+                                title_color=Color.YELLOW)
         
         self.tab1.add_child(self.name_location)
         self.tab1.add_child(self.name_region)
         self.tab1.add_child(self.description_location)
+        self.tab1.add_child(self.main_connections)
         
     
     def init(self):
@@ -93,5 +192,9 @@ class GameScene(Screen):
         self.name_location.set_text(Game.game_state["current_location_data"]()["name"].upper() + "  -")
         self.name_region.set_text(Game.game_state["current_region_data"]()["name"])
         self.description_location.set_text(Game.game_state["current_location_data"]()["description"])
+        
+        self.set_connections_main()
+        self.set_connections_control()
+        self.set_player_panel()
         
         self.name_region.set_x(self.name_location.abs_x + self.name_location.width + 2)

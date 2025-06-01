@@ -15,7 +15,8 @@ class Panel(Component):
                  border_color: str = Color.WHITE,
                  filler_color: str = Color.RESET,
                  title_color: str = Color.RESET,
-                 border_color_selected: str = Color.BOLD_BRIGHT_RED):
+                 border_color_selected: str = Color.BOLD_BRIGHT_RED,
+                 auto_resize: bool = False):
         """
         Инициализация компонента Панель
         
@@ -32,6 +33,7 @@ class Panel(Component):
             filler_color: Цвет заполнителя компонента (по умолчанию Color.RESET)
             title_color: Цвет заголовка компонента (по умолчанию Color.RESET)
             border_color_selected: Цвет границ компонента при выборе (по умолчанию Color.BOLD_BRIGHT_RED)
+            auto_resize: Автоматическое изменение размера компонента (по умолчанию False)
         """  
         super().__init__(x, y, width, height, paddings)
         
@@ -46,8 +48,22 @@ class Panel(Component):
         self.reactive('title_color', title_color)
         
         self.reactive('selected', False)
+        self.reactive('auto_resize', auto_resize)
         
         self.computed('true_width', lambda: max(len(self.title) + 2, self.width - 2), ['title', 'width'])
+        
+    def set_children(self, children: list['Component']):
+        """
+        Установка дочерних компонентов
+        
+        Args:
+            children: Список компонентов, которые будут добавлены
+        """
+        self.children = []
+        self.add_children(children)
+    
+    def resize(self):
+        self.height = min(max([child.y + child.height for child in self.children]), self.height)
         
     def set_title(self, title: str):
         self.title = title
@@ -60,6 +76,9 @@ class Panel(Component):
         Вычисление размеров компонента
         """
         self._calculate_self_size()
+        
+        if self.auto_resize:
+            self.resize()
         
         if self.title_alignment == Alignment.LEFT:
             self.title_x = self.x + 2

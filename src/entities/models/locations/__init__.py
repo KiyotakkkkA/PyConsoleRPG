@@ -1,6 +1,8 @@
-from .LocationsStarterPack import RuinsOfOrigins, CurveWay
+from .LocationsStarterPack import RuinsOfOrigins, CurveWay, SleepingGlade, AncientOakCrossing
 
 __all__ = [
     "RuinsOfOrigins",
-    "CurveWay"
+    "CurveWay",
+    "SleepingGlade",
+    "AncientOakCrossing"
 ]

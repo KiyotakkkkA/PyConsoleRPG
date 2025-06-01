@@ -5,7 +5,9 @@ from src.entities.interfaces.game import Location
 class RegistryLocation:
     locations: List[Location] = [
         RuinsOfOrigins(),
-        CurveWay()
+        CurveWay(),
+        SleepingGlade(),
+        AncientOakCrossing()
     ]
     
     _json_view = {}
@@ -14,9 +16,14 @@ class RegistryLocation:
     def load_to_json():
         for location in RegistryLocation.locations:
             RegistryLocation._json_view[location.id] = {
+                "id": location.id,
                 "name": location.name,
-                "description": location.description
+                "description": location.description,
+                "region": location.region,
+                "connections": location.connections
             }
+            
+        RegistryLocation.process_connections()
             
     @staticmethod
     def get_json_view():
@@ -25,3 +32,13 @@ class RegistryLocation:
     @staticmethod
     def get_by_id(id: str):
         return RegistryLocation._json_view.get(id, None)
+    
+    @staticmethod
+    def process_connections():
+        for location in RegistryLocation._json_view:
+            RegistryLocation._json_view[location]["connections"] = [
+                {
+                    "id": x,
+                    "name": RegistryLocation.get_by_id(x)['name'],
+                } for x in RegistryLocation._json_view[location]["connections"]
+            ]

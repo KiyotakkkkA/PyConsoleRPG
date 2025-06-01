@@ -17,13 +17,25 @@ class Game:
     
     # Регистрация экранов
     _screens = {
-        "main": MainScene(),
-        "game": GameScene(),
-        "settings": SettingsScene()
+        "main": MainScene,
+        "game": GameScene,
+        "settings": SettingsScene
     }
+    
+    _current_screen = None
     
     # Игрок
     player = Player()
+    
+    @classmethod
+    def get_location_by_id(cls, location_id: str):
+        """
+        Получение локации по ID
+        
+        Args:
+            location_id: ID локации
+        """
+        return RegistryLocation.get_by_id(location_id)
 
     @classmethod
     def _register_entities(cls):
@@ -51,9 +63,7 @@ class Game:
     
     # Игровое состояние
     game_state = {
-        "current_location_name": lambda: Game.player.current_location,
         "current_location_data": lambda: Game.locations.get(Game.player.current_location),
-        "current_region_name": lambda: Game.player.current_region,
         "current_region_data": lambda: Game.regions.get(Game.player.current_region)
     }
     
