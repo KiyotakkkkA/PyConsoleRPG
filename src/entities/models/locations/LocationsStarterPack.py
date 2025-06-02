@@ -8,9 +8,11 @@ class RuinsOfOrigins(Location):
         
         self.name = "Руины Истоков"
         self.description = "Забытое разрушенное святилище, некогда служившее местом для старинных ритуалов"
-        self.connections = [
-            "main_curve_way"
-        ]
+        self.connections = {
+            "main_curve_way": {
+                "level": None
+            }
+        }
 
 
 class CurveWay(Location):
@@ -21,11 +23,17 @@ class CurveWay(Location):
         
         self.name = "Извилистая тропа"
         self.description = "Поросший мхом и кустарниками путь, ведущий сквозь Великий Лес"
-        self.connections = [
-            "main_ruins_of_origins",
-            "main_ancient_oak_crossing",
-            "main_sleeping_glade"
-        ]
+        self.connections = {
+            "main_ruins_of_origins": {
+                "level": None
+            },
+            "main_ancient_oak_crossing": {
+                "level": None
+            },
+            "main_sleeping_glade": {
+                "level": 3
+            }
+        }
 
 class SleepingGlade(Location):
     def __init__(self):
@@ -35,10 +43,14 @@ class SleepingGlade(Location):
         
         self.name = "Поляна сновидений"
         self.description = "Странная поляна, усеянная цветами, наполняющими воздух сладковатым ароматом спокойствия и дремоты"
-        self.connections = [
-            "main_curve_way",
-            "main_ancient_oak_crossing"
-        ]
+        self.connections = {
+            "main_curve_way": {
+                "level": 3
+            },
+            "main_ancient_oak_crossing": {
+                "level": 3
+            }
+        }
 
 class AncientOakCrossing(Location):
     def __init__(self):
@@ -48,7 +60,11 @@ class AncientOakCrossing(Location):
         
         self.name = "Перепутье Древнего Дуба"
         self.description = "Огромный вековой дуб стоит на перекрёстке лесных троп, его кора покрыта таинственными рунами."
-        self.connections = [
-            "main_sleeping_glade",
-            "main_curve_way"
-        ]
+        self.connections = {
+            "main_sleeping_glade": {
+                "level": 3
+            },
+            "main_curve_way": {
+                "level": None
+            }
+        }

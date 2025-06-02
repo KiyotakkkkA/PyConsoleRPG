@@ -36,9 +36,13 @@ class RegistryLocation:
     @staticmethod
     def process_connections():
         for location in RegistryLocation._json_view:
-            RegistryLocation._json_view[location]["connections"] = [
-                {
+            _data = {}
+            for x in RegistryLocation._json_view[location]["connections"]:
+                loc = RegistryLocation.get_by_id(x)
+                _data[x] = {
                     "id": x,
-                    "name": RegistryLocation.get_by_id(x)['name'],
-                } for x in RegistryLocation._json_view[location]["connections"]
-            ]
+                    "name": loc['name'],
+                    "level": loc['connections'][location]['level']
+                }
+            
+            RegistryLocation._json_view[location]["connections"] = _data

@@ -4,7 +4,7 @@ class Location:
         self._name = None
         self._description = None
         self._region = None
-        self._connections = []
+        self._connections = {}
         
     @property
     def id(self):
@@ -53,7 +53,7 @@ class Location:
     @property
     def connections(self):
         """
-        Список доступных для перехода локаций
+        Словарь доступных для перехода локаций
         """
         return self._connections
     

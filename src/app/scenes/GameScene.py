@@ -81,9 +81,15 @@ class GameScene(Screen):
                                   border_color_selected=Color.BRIGHT_YELLOW,
                                   title_color=Color.YELLOW)
         
+        self.player_level_label = Text(self.player_panel.x + 2, self.player_panel.y, "[*] Уровень:", Color.WHITE, Color.RESET)
+        self.player_level = Text(self.player_level_label.x + self.player_level_label.width + 1, self.player_panel.y, "", Color.YELLOW, Color.RESET)
+        
         self.control_panel.add_child(self.action_panel)
         self.action_panel.add_child(self.control_connections)
         self.control_panel.add_child(self.player_panel)
+        
+        self.player_panel.add_child(self.player_level)
+        self.player_panel.add_child(self.player_level_label)
         
     def set_main_panel(self): # Основная панель
         main_panel_w = self.get_w() * 4 // 5
@@ -102,11 +108,33 @@ class GameScene(Screen):
         from src.Game import Game
         
         connections = []
-        
         gap = 1
-        for connection in Game.game_state["current_location_data"]()["connections"]:
-            connections.append(Text(self.main_connections.x + 1, self.main_connections.y + gap, connection["name"], Color.WHITE, Color.RESET))
-            gap += 1
+        conns = Game.game_state["current_location_data"]()["connections"]
+        player_level = Game.player.current_level
+        
+        for connection in conns:
+            
+            errors: List[Text] = []
+            
+            reqs = {
+                'level': {
+                    'req': lambda req=conns[connection]['level']: req,
+                    'complete': lambda req=conns[connection]['level']: not req or req <= player_level,
+                    'error': lambda req=conns[connection]['level']: f"Необходим уровень: {req}"
+                }
+            }
+            
+            text = Text(self.main_connections.x + 1, self.main_connections.y + gap, conns[connection]["name"], Color.WHITE, Color.RESET)
+            
+            if not reqs['level']['complete']():
+                errors.append(Text(self.main_connections.x + 1, self.main_connections.y + gap + 1, "  [!] " + reqs['level']['error'](), Color.BRIGHT_RED, Color.RESET))
+            
+            text.fg_color = Color.BRIGHT_BLACK if errors else Color.WHITE
+            
+            gap += len(errors) + 1
+            
+            connections.append(text)
+            connections.extend(errors)
         
         self.main_connections.set_children(connections)
         
@@ -114,15 +142,31 @@ class GameScene(Screen):
         from src.Game import Game
         
         connections = []
+        conns = Game.game_state["current_location_data"]()["connections"]
+        player_level = Game.player.current_level
         
-        for connection in Game.game_state["current_location_data"]()["connections"]:
-            connections.append(((f"Идти в: {connection['name']}", Color.WHITE), None, lambda conn=connection: self.game_move_to_location(conn['id'])))
+        for connection in conns:            
+            reqs = {
+                'level': {
+                    'req': lambda req=conns[connection]['level']: req,
+                    'complete': lambda req=conns[connection]['level']: not req or req <= player_level,
+                    'error': lambda req=conns[connection]['level']: f"Необходим уровень [{req}]"
+                }
+            }
+            if not reqs['level']['complete'](): continue
+            connections.append(((f"Идти в: {conns[connection]['name']}", Color.WHITE), None, lambda conn=conns[connection]['id']: self.game_move_to_location(conn)))
         
         self.control_connections.set_items(connections)
         
     def set_player_panel(self): # Панель навигации - панель игрока
+        from src.Game import Game
+        
         self.player_panel.set_y(self.action_panel.y + self.action_panel.height)
         self.player_panel.set_height(self.control_panel.height - self.action_panel.height - 6)
+        
+        self.player_level.set_text(f"{Game.player.current_level}")
+        self.player_level.set_y(self.player_panel.y + 1)
+        self.player_level_label.set_y(self.player_panel.y + 1)
         
     def set_tab_location(self): # Вкладка локации
         name_location_y = self.tab1.y + 3
@@ -186,15 +230,41 @@ class GameScene(Screen):
         self.add_child(self.main_panel)
         self.add_child(self.tab)
         self.add_child(self.help_panel)
-                
-    def update(self):
+        
+        self.first_mounted = 0
+        
+        self.name_location_text = ""
+        self.name_region_text = ""
+        self.description_location_text = ""
+        
+        self.on_event("player_move", self.update_location_info)
+        
+        self.finalize()
+        
+    def finalize(self):
         from src.Game import Game
-        self.name_location.set_text(Game.game_state["current_location_data"]()["name"].upper() + "  -")
-        self.name_region.set_text(Game.game_state["current_region_data"]()["name"])
-        self.description_location.set_text(Game.game_state["current_location_data"]()["description"])
+        
+        Game.player.move_to_location(Game.player.current_location)
+        
+    def update_location_info(self, data):
+        from src.Game import Game
+        
+        self.name_location_text = Game.game_state["current_location_data"]()["name"].upper() + "  -"
+        self.name_region_text = Game.game_state["current_region_data"]()["name"]
+        self.description_location_text = Game.game_state["current_location_data"]()["description"]
         
         self.set_connections_main()
         self.set_connections_control()
+                
+    def update(self):
+        self.name_location.set_text(self.name_location_text)
+        self.name_region.set_text(self.name_region_text)
+        self.description_location.set_text(self.description_location_text)
+
         self.set_player_panel()
         
         self.name_region.set_x(self.name_location.abs_x + self.name_location.width + 2)
+        
+        if self.first_mounted < 2:
+            self.first_mounted += 1
+            self.update_location_info(None)

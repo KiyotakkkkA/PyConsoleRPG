@@ -42,6 +42,12 @@ class Screen(EventListener):
     def init(self):
         pass
     
+    def on_event(self, event_name: str, callback: Callable):
+        super().on_event(event_name, callback)
+        
+    def emit_event(self, event_name: str, data: dict | None):
+        super().emit_event(event_name, data)
+    
     @classmethod
     def get_instance(cls):
         """

@@ -27,6 +27,11 @@ class Game:
     # Игрок
     player = Player()
     
+    game_state = {
+        "current_location_data": lambda: Game.locations.get(Game.player.current_location),
+        "current_region_data": lambda: Game.regions.get(Game.player.current_region)
+    }
+    
     @classmethod
     def get_location_by_id(cls, location_id: str):
         """
@@ -61,14 +66,9 @@ class Game:
         if cls.DEBUG:
             print("[INFO] Экраны зарегистрированы.")
     
-    # Игровое состояние
-    game_state = {
-        "current_location_data": lambda: Game.locations.get(Game.player.current_location),
-        "current_region_data": lambda: Game.regions.get(Game.player.current_region)
-    }
-    
     @classmethod
     def init(cls):
         cls._register_entities()
         cls._register_screens()
+        
         cls.screen_manager.set_current_screen("main")

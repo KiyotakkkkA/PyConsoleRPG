@@ -7,10 +7,10 @@ process = subprocess.Popen(
     creationflags=subprocess.CREATE_NEW_CONSOLE
 )
 
-time.sleep(1)
+time.sleep(2)
 
 pyautogui.hotkey('alt', 'enter')
-time.sleep(2)
+time.sleep(3)
 
 pyautogui.write(r'.\scripts\windows\env.ps1')
 pyautogui.press('enter')

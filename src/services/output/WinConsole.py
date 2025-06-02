@@ -125,7 +125,7 @@ class WinConsole:
         
         self.prev_buffer = None
         
-        self.target_fps = 30
+        self.target_fps = 60
         self.last_frame_time = time.time()
         
         self.stdscr = None
