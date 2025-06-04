@@ -15,7 +15,7 @@ class MainScene(Screen):
         
     @staticmethod
     def start_game():
-        ScreenManager.set_current_screen("game")
+        ScreenManager.navigate_to_screen("game")
     
     @staticmethod
     def exit():
@@ -47,7 +47,7 @@ class MainScene(Screen):
         self.menu.add_items([
             (("Новая игра", Color.WHITE), Keys.N, lambda: MainScene.start_game()),
             (("Загрузить игру", Color.WHITE), Keys.L, lambda: print("Загрузить игру")),
-            (("Настройки", Color.WHITE), Keys.S, lambda: ScreenManager.set_current_screen("settings")),
+            (("Настройки", Color.WHITE), Keys.S, lambda: ScreenManager.navigate_to_screen("settings")),
             (("Управление", Color.WHITE), Keys.C, lambda: print("Управление")),
             (("Выход", Color.WHITE), Keys.Q, lambda: MainScene.exit()),
         ])

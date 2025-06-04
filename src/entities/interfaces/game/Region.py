@@ -1,4 +1,8 @@
 class Region:
+    """
+    Интерфейс для региона
+    """
+    
     def __init__(self):
         self.id = None
         self._name = None

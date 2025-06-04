@@ -1,5 +1,7 @@
 from src.services.frontend.core import Screen
 from src.services.events import Keys
+from src.services.frontend.ui.containers import DialogWindow
+from src.services.output import Color
 
 class SettingsScene(Screen):    
     def __init__(self):

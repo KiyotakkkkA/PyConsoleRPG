@@ -3,6 +3,10 @@ from src.entities.models.locations import *
 from src.entities.interfaces.game import Location
 
 class RegistryLocation:
+    """
+    Регистратор локаций
+    """
+    
     locations: List[Location] = [
         RuinsOfOrigins(),
         CurveWay(),

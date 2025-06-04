@@ -1,5 +1,5 @@
 from src.services.frontend.core import Screen
-from src.services.frontend.ui.containers import Panel, Tab
+from src.services.frontend.ui.containers import Panel, Tab, DialogWindow
 from src.services.frontend.ui.general import Text, Menu
 from src.services.frontend.core.Format import Alignment
 from src.services.events import Keys
@@ -10,9 +10,12 @@ class GameScene(Screen):
         super().__init__()
         self.performance_vision = True
         
+        self.is_in_dialog = False
+        
         self.bind_key(Keys.F1, self.toggle_performance_monitor)
         self.bind_key(Keys.LEFT, self.to_control_panel)
         self.bind_key(Keys.RIGHT, self.to_main_panel)
+        self.bind_key(Keys.ESCAPE, self.ask_to_exit)
         
     def game_move_to_location(self, location_id: str):
         """
@@ -22,7 +25,9 @@ class GameScene(Screen):
             location_id: ID локации
         """
         from src.Game import Game
+        if Game.game_state['current_relax_time'] > 0: return
         Game.player.move_to_location(location_id)
+        Game.game_state['current_relax_time'] = Game.player.get_location_relax_time()
         
         self.control_connections.set_selection(0)
     
@@ -33,6 +38,7 @@ class GameScene(Screen):
         
     def to_control_panel(self):
         """Переключение активной корневой панели"""
+        if self.is_in_dialog: return
         self.main_panel.selected = False
         self.action_panel.selected = True
         self.control_connections.is_active = True
@@ -40,6 +46,7 @@ class GameScene(Screen):
         
     def to_main_panel(self):
         """Переключение активной корневой панели"""
+        if self.is_in_dialog: return
         self.main_panel.selected = True
         self.action_panel.selected = False
         self.control_connections.is_active = False
@@ -83,6 +90,7 @@ class GameScene(Screen):
         
         self.player_level_label = Text(self.player_panel.x + 2, self.player_panel.y, "[*] Уровень:", Color.WHITE, Color.RESET)
         self.player_level = Text(self.player_level_label.x + self.player_level_label.width + 1, self.player_panel.y, "", Color.YELLOW, Color.RESET)
+        self.relax_time = Text(self.player_panel.x + 2, self.player_panel.height - 1, "Отдых {}", Color.BRIGHT_BLACK, Color.RESET)
         
         self.control_panel.add_child(self.action_panel)
         self.action_panel.add_child(self.control_connections)
@@ -90,6 +98,7 @@ class GameScene(Screen):
         
         self.player_panel.add_child(self.player_level)
         self.player_panel.add_child(self.player_level_label)
+        self.player_panel.add_child(self.relax_time)
         
     def set_main_panel(self): # Основная панель
         main_panel_w = self.get_w() * 4 // 5
@@ -164,9 +173,19 @@ class GameScene(Screen):
         self.player_panel.set_y(self.action_panel.y + self.action_panel.height)
         self.player_panel.set_height(self.control_panel.height - self.action_panel.height - 6)
         
+        self.relax_time.set_y(self.player_panel.y + 1)
+        if Game.game_state['current_relax_time'] > 0:
+            self.relax_time.set_fg_color(Color.BRIGHT_RED)
+            self.relax_time.set_text(f"| ПЕРЕМЕЩЕНИЕ - {float(Game.game_state['current_relax_time']):.2f} сек. |")
+        else:
+            self.relax_time.set_fg_color(Color.BRIGHT_GREEN)
+            self.relax_time.set_text("| ГОТОВ К ПЕРЕМЕЩЕНИЮ |")
+        
         self.player_level.set_text(f"{Game.player.current_level}")
-        self.player_level.set_y(self.player_panel.y + 1)
-        self.player_level_label.set_y(self.player_panel.y + 1)
+        self.player_level.set_y(self.player_panel.y + 3)
+        self.player_level_label.set_y(self.player_panel.y + 3)
+        
+        Game.time_count_with_fps()
         
     def set_tab_location(self): # Вкладка локации
         name_location_y = self.tab1.y + 3
@@ -199,6 +218,8 @@ class GameScene(Screen):
         self.set_control_panel()
         self.set_main_panel()
         self.set_help_panel()
+        
+        self.dialog_window = None
         
         self.tab = Tab(x=self.main_panel.x,
                        y=self.main_panel.y,
@@ -253,18 +274,52 @@ class GameScene(Screen):
         self.name_region_text = Game.game_state["current_region_data"]()["name"]
         self.description_location_text = Game.game_state["current_location_data"]()["description"]
         
-        self.set_connections_main()
-        self.set_connections_control()
-                
-    def update(self):
         self.name_location.set_text(self.name_location_text)
         self.name_region.set_text(self.name_region_text)
         self.description_location.set_text(self.description_location_text)
-
-        self.set_player_panel()
         
         self.name_region.set_x(self.name_location.abs_x + self.name_location.width + 2)
+        
+        self.set_connections_main()
+        self.set_connections_control()
+        self.set_player_panel()
+        
+    def ask_to_exit(self):
+        from src.Game import Game
+        
+        if self.dialog_window: return
+        
+        self.dialog_window = DialogWindow(x=self.get_w() // 2 - 20,
+                                          y=self.get_h() // 2 - 25,
+                                          width=40,
+                                          height=7,
+                                          text="Вы уверены, что хотите выйти?",
+                                          ctype="YES_NO",
+                                          text_color=Color.BRIGHT_YELLOW)
+        
+        def exit_game():
+            self.unbind_child(self.dialog_window)
+            self.dialog_window = None
+            self.is_in_dialog = False
+            Game.screen_manager.navigate_to_screen('main')
+            
+        def close_dialog():
+            self.unbind_child(self.dialog_window)
+            self.dialog_window = None
+            self.is_in_dialog = False
+            
+        
+        self.dialog_window.bind_yes(exit_game)
+        self.dialog_window.bind_no(close_dialog)
+        
+        self.is_in_dialog = True
+        self.add_child(self.dialog_window)
+                
+    def update(self):
+        self.set_player_panel()
         
         if self.first_mounted < 2:
             self.first_mounted += 1
             self.update_location_info(None)
+            
+        

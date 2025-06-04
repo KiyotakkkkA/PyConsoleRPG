@@ -1,7 +1,7 @@
 from .Computable import Computable
-from .game.Location import Location
+from .Serialiazble import Serialiazble
 
 __all__ = [
     "Computable",
-    "Location"
+    "Serialiazble"
 ]

@@ -1,4 +1,8 @@
 class Location:
+    """
+    Интерфейс для локации
+    """
+    
     def __init__(self):
         self._id = None
         self._name = None

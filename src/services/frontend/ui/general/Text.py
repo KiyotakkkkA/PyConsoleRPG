@@ -53,6 +53,24 @@ class Text(Component):
         """
         self.text = text
         self.process_text()
+        
+    def set_fg_color(self, color: str):
+        """
+        Установка цвета текста
+        
+        Args:
+            color: Новый цвет текста
+        """
+        self.fg_color = color
+        
+    def set_bg_color(self, color: str):
+        """
+        Установка цвета фона
+        
+        Args:
+            color: Новый цвет фона
+        """
+        self.bg_color = color
     
     def draw(self, screen: 'Screen'):
         """

@@ -122,7 +122,8 @@ class Screen(EventListener):
         self.children.append(child)
         
     def unbind_child(self, child: Component) -> None:
-        self.children.remove(child)
+        if child in self.children:
+            self.children.remove(child)
     
     def clear_buffer(self, buffer: List[List[ScreenPixel]], char: str = " ", fg_color: str = Color.WHITE, bg_color: str = Color.RESET) -> None:
         """Очистка буфера и установка значений по умолчанию"""

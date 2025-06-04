@@ -1,6 +1,10 @@
 from typing import Callable, Dict, Set, Any, Optional
 
 class Computable:
+    """
+    Интерфейс для вычисляемых полей
+    """
+    
     def __init__(self):
         super().__init__()
         self._computed_values = {}

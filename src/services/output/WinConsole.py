@@ -3,6 +3,7 @@ from ctypes import wintypes
 import re
 import time
 from src.services.output import Color
+from src.config import Config
 from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
@@ -125,7 +126,7 @@ class WinConsole:
         
         self.prev_buffer = None
         
-        self.target_fps = 60
+        self.target_fps = Config.FPS
         self.last_frame_time = time.time()
         
         self.stdscr = None

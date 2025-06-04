@@ -3,6 +3,10 @@ from src.entities.models.regions import *
 from src.entities.interfaces.game import Region
 
 class RegistryRegion:
+    """
+    Регистратор регионов
+    """
+    
     regions: List[Region] = [
         TierenhallKingdom(),
         GreatElmiraForest(),
