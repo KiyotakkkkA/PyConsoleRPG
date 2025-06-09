@@ -1,17 +1,22 @@
 from typing import List
-from src.entities.models.regions import *
+import src.entities.models.regions as reg_package
 from src.entities.interfaces.game import Region
+import pkgutil
+import importlib
+import inspect
 
 class RegistryRegion:
     """
     Регистратор регионов
     """
     
-    regions: List[Region] = [
-        TierenhallKingdom(),
-        GreatElmiraForest(),
-        SwardenfallEmpire()
-    ]
+    regions: List[Region] = []
+    
+    for finder, name, ispkg in pkgutil.walk_packages(reg_package.__path__, reg_package.__name__ + "."):
+        module = importlib.import_module(name)
+        for _, obj in inspect.getmembers(module, inspect.isclass):
+            if issubclass(obj, Region) and obj is not Region:
+                regions.append(obj())
     
     _json_view = {}
         

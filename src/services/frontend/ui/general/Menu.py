@@ -21,6 +21,24 @@ class MenuItem:
         self.key = key
         self.action = action
         
+class SeparatorItem:
+    def __init__(self, filler: str, width: int, color: str = Color.RESET):
+        """
+        Инициализация компонента Разделителя
+        
+        Args:
+            filler: Заполнитель
+            width: Ширина
+            color: Цвет
+        """
+        self.filler = filler
+        self.width = width
+        self.color = color
+        self.text = Text(x=0,
+                         y=0,
+                         text=filler * width,
+                         fg_color=color)
+        
 class Menu(Component):
     def __init__(self, x: int,
                  y: int,
@@ -49,6 +67,7 @@ class Menu(Component):
         self.reactive('active_index', -1)
         self.reactive('items', [])
         self.reactive('keys_to_item_indexes', {})
+        self.reactive('max_len_row', 0)
         
         self.reactive('gap', gap)
         self.reactive('inactive_menu_color', inactive_menu_color)
@@ -97,6 +116,8 @@ class Menu(Component):
         
         if self.items:
             self.active_index = (self.active_index - 1) % len(self.items)
+            while isinstance(self.items[self.active_index], SeparatorItem):
+                self.active_index = (self.active_index - 1) % len(self.items)
             
     def move_down(self):
         if not self.is_active:
@@ -104,8 +125,10 @@ class Menu(Component):
         
         if self.items:
             self.active_index = (self.active_index + 1) % len(self.items)
+            while isinstance(self.items[self.active_index], SeparatorItem):
+                self.active_index = (self.active_index + 1) % len(self.items)
             
-    def add_item(self, text: tuple[str, str], key: int, action: Callable[[], None]):
+    def add_item(self, text: tuple[str, str] | SeparatorItem, key: int, action: Callable[[], None]):
         """
         Добавление пункта меню
         
@@ -115,10 +138,20 @@ class Menu(Component):
             action: Действие, выполняемое при нажатии на пункт меню
         """
         
-        self.width = max(len(text[0]), self.calculate_width())
+        current_len = len(text[0]) if isinstance(text, tuple) else len(text.text.text)
+        self.max_len_row = max(self.max_len_row, current_len)
+        
+        self.width = max(current_len, self.calculate_width())
         self.height = self.paddings[0] + self.gap * len(self.items) + self.paddings[2]
         
         element_x = self.x + self.paddings[3]
+        
+        if isinstance(text, SeparatorItem):
+            text.text.x = self.x + self.paddings[3]
+            text.text.y = self.y + self.paddings[0] + 1 + self.gap * len(self.items)
+            text.text.set_text(text.filler * self.max_len_row)
+            self.items.append(text)
+            return
         
         if self.alignment == Alignment.LEFT:
             element_x = self.x + self.paddings[3]
@@ -138,6 +171,9 @@ class Menu(Component):
         self.items.append(menu_item)
         
         for item in self.items:
+            if isinstance(item, SeparatorItem):
+                continue            
+            
             if self.alignment == Alignment.LEFT:
                 item.text.x = self.x + self.paddings[3]
             elif self.alignment == Alignment.RIGHT:
@@ -149,7 +185,7 @@ class Menu(Component):
         if key:
             self.bind_key(key, lambda: self.move_with_key(key))
         
-    def add_items(self, items: list[tuple[str, tuple[str, str], int, Callable[[], None]]]):
+    def add_items(self, items: list[(tuple[str, tuple[str, str], int, Callable[[], None]]) | SeparatorItem]):
         """
         Добавление нескольких пунктов меню
         
@@ -159,7 +195,7 @@ class Menu(Component):
         for item in items:
             self.add_item(*item)
             
-    def set_items(self, items: list[tuple[str, tuple[str, str], int, Callable[[], None]]]):
+    def set_items(self, items: list[(tuple[str, tuple[str, str], int, Callable[[], None]]) | SeparatorItem]):
         """
         Установка нескольких пунктов меню
         
@@ -171,7 +207,7 @@ class Menu(Component):
         self.add_items(items)
             
     def calculate_width(self):
-        return max([len(item.text.text) for item in self.items]) if self.items else 0
+        return max([len(item.text.text) for item in self.items if isinstance(item, MenuItem)]) if self.items else 0
             
     def calculate(self):
         self._calculate_self_size()

@@ -9,6 +9,7 @@ class Location:
         self._description = None
         self._region = None
         self._connections = {}
+        self._resources = {}
         
     @property
     def id(self):
@@ -64,4 +65,15 @@ class Location:
     @connections.setter
     def connections(self, value):
         self._connections = value
+        
+    @property
+    def resources(self):
+        """
+        Словарь доступных для сбора ресурсов
+        """
+        return self._resources
+    
+    @resources.setter
+    def resources(self, value):
+        self._resources = value
     
