@@ -4,7 +4,6 @@ from src.entities.interfaces.game import Location
 import pkgutil
 import importlib
 import inspect
-from .RegistryItems import RegistryItems
 
 class RegistryLocation:
     """
@@ -46,18 +45,12 @@ class RegistryLocation:
     
     @staticmethod
     def process_resources():
-        for location in RegistryLocation._json_view:
+        for location in RegistryLocation._json_view:    
             _data = {}
             for x in RegistryLocation._json_view[location]["resources"]:
-                item = RegistryItems.get_by_id(x)
                 _data[x] = {
                     "id": x,
-                    "name": item['name'],
-                    "type": item['type'],
-                    "rarity": item['rarity'],
-                    "weight": item['weight'],
                     "amount": RegistryLocation._json_view[location]["resources"][x]["amount"],
-                    "level_need": item['level_need']
                 }
             
             RegistryLocation._json_view[location]["resources"] = _data

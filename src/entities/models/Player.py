@@ -1,10 +1,10 @@
 from src.services.events import EventListener
-from src.entities.interfaces import Serialiazble, Computable
+from src.entities.interfaces import Serializable, Computable
 
-class Player(EventListener, Serialiazble, Computable):
+class Player(EventListener, Computable, Serializable):
     def __init__(self):
         super().__init__()
-        self._is_new = True
+        self.is_new = True
         self.initial_location = "main_ruins_of_origins"
         self.initial_region = "main_tierenhall_kingdom"
         
@@ -46,7 +46,7 @@ class Player(EventListener, Serialiazble, Computable):
         self.reactive('energy', self.max_energy)
         self.reactive('astrum', self.max_astrum)
         
-        if self._is_new:
+        if self.is_new:
             self.current_location = self.initial_location
             self.current_region = self.initial_region
             self.current_level = self.initial_level
@@ -79,9 +79,13 @@ class Player(EventListener, Serialiazble, Computable):
         amount = loc["resources"][resource_id]["amount"]
         loc["resources"][resource_id]["amount"] = 0
         
+        Game.game_state.loc_res_meta[self.current_location] = Game.game_state.loc_res_meta.get(self.current_location, {})
+        Game.game_state.loc_res_meta[self.current_location][resource_id] = {
+            'amount': loc["resources"][resource_id]["amount"]
+        }
+        
         self.inventory[resource_id] = {
-            "amount": amount,
-            "item": Game.get_item_by_id(resource_id)
+            "amount": self.inventory.get(resource_id, {}).get("amount", 0) + amount,
         }
         self.emit_event("player_collect_resource", {"resource_id": resource_id, "amount": amount})
         

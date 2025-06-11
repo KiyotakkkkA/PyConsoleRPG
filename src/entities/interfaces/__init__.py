@@ -1,7 +1,7 @@
 from .Computable import Computable
-from .Serialiazble import Serialiazble
+from .Serializable import Serializable
 
 __all__ = [
     "Computable",
-    "Serialiazble"
+    "Serializable"
 ]

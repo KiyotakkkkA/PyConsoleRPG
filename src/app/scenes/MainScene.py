@@ -4,6 +4,7 @@ from src.services.frontend.ui.general import Text, Menu
 from src.services.output import Color
 from src.services.events import Keys
 
+
 from src.services.utils import ToArtConverter
 
 class MainScene(Screen):    
@@ -15,10 +16,14 @@ class MainScene(Screen):
         
     @staticmethod
     def start_game():
+        from src.Game import Game
+        Game.load()
         ScreenManager.navigate_to_screen("game")
     
     @staticmethod
     def exit():
+        from src.Game import Game
+        Game.save()
         """Выход из игры"""
         exit()
         

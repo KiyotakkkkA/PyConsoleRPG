@@ -141,14 +141,20 @@ class Table(Component):
         self.total_rows_count = len(self.rows)
         
     def add_rows(self, rows: list[list[str]], colors: list[list[tuple[str, str]]] = []):
-        for row in rows:
-            self.add_row(row, colors)
+        for i in range(len(rows)):
+            self.add_row(rows[i], colors[i])
             
     def set_row(self, row: int, data: list[str], colors: list[tuple[str, str]] = []):
         if not colors:
             colors = [(Color.WHITE, Color.RESET) for _ in range(len(data))]
         self.rows[row] = data
         self.rows_colors[row] = colors
+        
+    def set_rows(self, rows: list[list[str]], colors: list[list[tuple[str, str]]] = []):
+        self.rows = []
+        self.rows_colors = []
+        
+        self.add_rows(rows, colors)
         
     def draw(self, screen: 'Screen'):
         screen.draw_text(self.x, self.y, Symbols.BORDERS.TOP_LEFT + Symbols.BORDERS.TOP * (self.width - 1) + Symbols.BORDERS.TOP_RIGHT, self.border_color, Color.RESET)
@@ -171,12 +177,8 @@ class Table(Component):
                 
                 text_x = self.calculate_aligned_x(self.headers_data[j]['x'], self.headers_data[j]['true_width'], len(self.rows[i][j]), self.row_alignment)
                 
-                if i == self.current_selected_row and self.is_active:
-                    fgcolor = self.selected_row_color
-                    bgcolor = self.selected_row_color
-                else:
-                    fgcolor = self.rows_colors[i][j][0]
-                    bgcolor = self.rows_colors[i][j][1]
+                fgcolor = self.selected_row_color if i == self.current_selected_row and self.is_active else self.rows_colors[i][j][0]
+                bgcolor = self.selected_row_color if i == self.current_selected_row and self.is_active else self.rows_colors[i][j][1]
                 
                 text = self.truncate_text(self.rows[i][j], self.headers_data[j]['true_width'])
                 

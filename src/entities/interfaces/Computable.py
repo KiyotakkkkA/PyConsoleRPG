@@ -81,6 +81,7 @@ class Computable:
         
     def __del__(self):
         """Отписываемся от всех событий при удалении объекта"""
-        for name, subs in self._subscriptions.items():
-            for dep, handler in subs:
-                self.unsubscribe(f"change:{dep}", handler)
+        if hasattr(self, "unsubscribe"):
+            for name, subs in self._subscriptions.items():
+                for dep, handler in subs:
+                    self.unsubscribe(f"change:{dep}", handler)

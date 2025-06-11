@@ -40,12 +40,12 @@ class GameScene(Screen):
             location_id: ID локации
         """
         from src.Game import Game
-        if Game.game_state['current_relax_time'] > 0: return
-        Game.game_state['start_time'] = time.time()
-        Game.game_state['frame_count'] = 0
+        if Game.game_state.state['current_relax_time'] > 0: return
+        Game.game_state.state['start_time'] = time.time()
+        Game.game_state.state['frame_count'] = 0
         
         Game.player.move_to_location(location_id)
-        Game.game_state['current_relax_time'] = Game.player.get_location_relax_time()
+        Game.game_state.state['current_relax_time'] = Game.player.get_location_relax_time()
         
         self.control_activities.set_selection(0)
     
@@ -195,7 +195,7 @@ class GameScene(Screen):
         
         connections = []
         gap = 1
-        conns = Game.game_state["current_location_data"]()["connections"]
+        conns = Game.game_state.computable["current_location_data"]()["connections"]
         player_level = Game.player.current_level
         
         for connection in conns:
@@ -229,26 +229,28 @@ class GameScene(Screen):
         
         resources = []
         gap = 1
-        res = Game.game_state["current_location_data"]()["resources"]
+        res = Game.game_state.computable["current_location_data"]()["resources"]
         player_level = Game.player.current_level
         
         for resource in res:
+            
+            res_data = Game.get_item_by_id(resource)
             
             errors: List[Text] = []
             
             reqs = {
                 'level': {
-                    'req': lambda req=res[resource]['level_need']: req,
-                    'complete': lambda req=res[resource]['level_need']: not req or req <= player_level,
-                    'error': lambda req=res[resource]['level_need']: f"Необходим уровень: {req}"
+                    'req': lambda req=res_data['level_need']: req,
+                    'complete': lambda req=res_data['level_need']: not req or req <= player_level,
+                    'error': lambda req=res_data['level_need']: f"Необходим уровень: {req}"
                 }
             }
             
             amount = res[resource]['amount']
             
-            text_name = Text(self.resources_panel.x + 1, self.resources_panel.y + gap, res[resource]["name"], Color.WHITE, Color.RESET)
+            text_name = Text(self.resources_panel.x + 1, self.resources_panel.y + gap, res_data["name"], Color.WHITE, Color.RESET)
             text_count = Text(text_name.x + text_name.width + 1, self.resources_panel.y + gap, f"[x{amount}]", Color.WHITE, Color.RESET)
-            text_rarity = Text(text_count.x + text_count.width + 1, self.resources_panel.y + gap, f"[{res[resource]['rarity'].value[0]}]", res[resource]['rarity'].value[2], Color.RESET)
+            text_rarity = Text(text_count.x + text_count.width + 1, self.resources_panel.y + gap, f"[{res_data['rarity'].value[0]}]", res_data['rarity'].value[2], Color.RESET)
             
             if amount <= 0:
                 errors.append(Text(self.resources_panel.x + 1, self.resources_panel.y + gap + 1, "  " + "ЗАКОНЧИЛСЯ", Color.BRIGHT_RED, Color.RESET))
@@ -258,7 +260,7 @@ class GameScene(Screen):
             
             text_name.fg_color = Color.BRIGHT_BLACK if errors or amount <= 0 else Color.WHITE
             text_count.fg_color = Color.BRIGHT_BLACK if errors or amount <= 0 else Color.BRIGHT_YELLOW
-            text_rarity.fg_color = Color.BRIGHT_BLACK if errors or amount <= 0 else res[resource]['rarity'].value[2]
+            text_rarity.fg_color = Color.BRIGHT_BLACK if errors or amount <= 0 else res_data['rarity'].value[2]
             
             gap += len(errors) + 1
             
@@ -276,7 +278,7 @@ class GameScene(Screen):
         from src.Game import Game
         
         self.temp_items_activities = []
-        data = Game.game_state["current_location_data"]()
+        data = Game.game_state.computable["current_location_data"]()
         
         conns = data["connections"]
         
@@ -295,7 +297,7 @@ class GameScene(Screen):
     def set_resources_control(self): # Панель навигации - ресурсы
         from src.Game import Game
         
-        data = Game.game_state["current_location_data"]()
+        data = Game.game_state.computable["current_location_data"]()
         _tmp = []
         
         res = data["resources"]
@@ -304,14 +306,17 @@ class GameScene(Screen):
         start_len = len(self.temp_items_activities)
         
         for resource in res:
+            
+            res_data = Game.get_item_by_id(resource)
+            
             reqs = {
                 'level': {
-                    'req': lambda req=res[resource]['level_need']: req,
-                    'complete': lambda req=res[resource]['level_need']: not req or req <= player_level,
+                    'req': lambda req=res_data['level_need']: req,
+                    'complete': lambda req=res_data['level_need']: not req or req <= player_level,
                 }
             }
             if not reqs['level']['complete']() or res[resource]['amount'] <= 0: continue
-            _tmp.append(((f"Собрать: {res[resource]['name']} [x{res[resource]['amount']}]", Color.WHITE), None, lambda res=resource: self.game_collect_resource(res)))
+            _tmp.append(((f"Собрать: {res_data['name']} [x{res[resource]['amount']}]", Color.WHITE), None, lambda res=resource: self.game_collect_resource(res)))
             
         end_len = len(self.temp_items_activities) + len(_tmp)
         
@@ -327,9 +332,9 @@ class GameScene(Screen):
         self.player_panel.set_height(self.control_panel.height - self.action_panel.height - 6)
         
         self.relax_time.set_y(self.player_panel.y + 1)
-        if Game.game_state['current_relax_time'] > 0:
+        if Game.game_state.state['current_relax_time'] > 0:
             self.relax_time.set_fg_color(Color.BRIGHT_RED)
-            self.relax_time.set_text(f"| ПЕРЕМЕЩЕНИЕ - {float(Game.game_state['current_relax_time']):.2f} сек. |")
+            self.relax_time.set_text(f"| ПЕРЕМЕЩЕНИЕ - {float(Game.game_state.state['current_relax_time']):.2f} сек. |")
         else:
             self.relax_time.set_fg_color(Color.BRIGHT_GREEN)
             self.relax_time.set_text("| ГОТОВ К ПЕРЕМЕЩЕНИЮ |")
@@ -561,9 +566,9 @@ class GameScene(Screen):
     def update_location_info(self, data):
         from src.Game import Game
         
-        self.name_location_text = Game.game_state["current_location_data"]()["name"].upper() + "  -"
-        self.name_region_text = Game.game_state["current_region_data"]()["name"]
-        self.description_location_text = Game.game_state["current_location_data"]()["description"]
+        self.name_location_text = Game.game_state.computable["current_location_data"]()["name"].upper() + "  -"
+        self.name_region_text = Game.game_state.computable["current_region_data"]()["name"]
+        self.description_location_text = Game.game_state.computable["current_location_data"]()["description"]
         
         self.name_location.set_text(self.name_location_text)
         self.name_region.set_text(self.name_region_text)
@@ -580,23 +585,33 @@ class GameScene(Screen):
     def update_inventory_info(self, data):
         from src.Game import Game
         
+        if len(Game.player.inventory) == 0: return
+        
         inv = Game.player.inventory
         
-        for item in inv:
-            type = inv[item]["item"]["type"].value
-            rarity = inv[item]["item"]["rarity"].value
-            amount = inv[item]["amount"]
-            price = inv[item]["item"]["price"]
-            weight = inv[item]["item"]["weight"]
+        _temp_rows = []
+        _temp_colors = []
         
-        self.inventory_table.add_row([
-                inv[item]["item"]["name"],
+        for item in inv:
+            
+            _res_data = Game.get_item_by_id(item)
+            
+            type = _res_data["type"].value
+            rarity = _res_data["rarity"].value
+            amount = inv[item]["amount"]
+            price = _res_data["price"]
+            weight = _res_data["weight"]
+        
+            _temp_rows.append([
+                _res_data["name"],
                 type[1],
                 rarity[0],
                 str(amount),
                 f"{price * amount:.2f} мон.",
                 f"{weight * amount:.2f} кг.",
-            ], [
+            ])
+            
+            _temp_colors.append([
             (Color.BRIGHT_YELLOW, Color.RESET),
             (Color.WHITE, Color.RESET),
             (type[2], Color.RESET),
@@ -605,6 +620,8 @@ class GameScene(Screen):
             (Color.WHITE, Color.RESET),
             (Color.WHITE, Color.RESET),
         ])
+        
+        self.inventory_table.set_rows(_temp_rows, _temp_colors)
         
         self.update_location_info(data)
         
@@ -654,6 +671,7 @@ class GameScene(Screen):
         if self.first_mounted < 2:
             self.first_mounted += 1
             self.update_location_info(None)
+            self.update_inventory_info(None)
             self.control_activities.set_selection(0)
             
         
