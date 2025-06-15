@@ -2,7 +2,7 @@ from src.services.frontend.core import Component
 from src.services.output import Color, Symbols
 from src.services.frontend.core.Format import Alignment
 from src.services.events import Keys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Tuple, Callable
 
 if TYPE_CHECKING:
     from src.services.frontend.core import Screen
@@ -39,6 +39,7 @@ class Table(Component):
             border_color: Цвет границы
         """
         super().__init__(x, y, width, 1, (0, 0, 0, 0))
+        
         self.headers = headers
         self.title_alignment = title_alignment
         self.row_alignment = row_alignment
@@ -66,8 +67,8 @@ class Table(Component):
         self.reactive('start_row', 0)
         self.reactive('end_row', 0)
         
-        self.bind_key(Keys.UP, self.move_up)
-        self.bind_key(Keys.DOWN, self.move_down)
+        self._events.append((Keys.UP, self.move_up))
+        self._events.append((Keys.DOWN, self.move_down))
         
         self.count_headers_size()
         
@@ -140,7 +141,7 @@ class Table(Component):
         self.end_row = min(self.max_rows, len(self.rows))
         self.total_rows_count = len(self.rows)
         
-    def add_rows(self, rows: list[list[str]], colors: list[list[tuple[str, str]]] = []):
+    def add_rows(self, rows: list[list[str]] = [], colors: list[list[tuple[str, str]]] = []):
         for i in range(len(rows)):
             self.add_row(rows[i], colors[i])
             

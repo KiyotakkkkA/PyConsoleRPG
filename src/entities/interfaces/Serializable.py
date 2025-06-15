@@ -58,12 +58,11 @@ class Serializable:
                             filtered_dict[k] = self._serialize_value(k, v)
                         except TypeError:
                             continue
-                result[field] = {'type': 'dict', 'value': filtered_dict, 'state': 'reactive' if field.startswith('_') else 'normal'}
+                result[field] = {'type': 'dict', 'value': filtered_dict}
                 continue
             
             try:
                 result[field] = self._serialize_value(field, value)
-                result[field]['state'] = 'reactive' if field.startswith('_') else 'normal'
             except TypeError:
                 continue
             
@@ -82,7 +81,6 @@ class Serializable:
                 'enum_type': value.__class__.__name__,
                 'enum_value': value.name,
                 'is_serializable': True,
-                'state': 'reactive' if field.startswith('_') else 'normal'
             }
             
         if isinstance(value, dict):
@@ -90,7 +88,6 @@ class Serializable:
                 'type': 'dict',
                 'value': {k: self._serialize_value(k, v) for k, v in value.items()},
                 'is_serializable': True,
-                'state': 'reactive' if field.startswith('_') else 'normal'
             }
             
         if isinstance(value, self.__primitive_types__):
@@ -101,17 +98,16 @@ class Serializable:
             if isinstance(value, tuple):
                 return {'type': 'tuple', 'value': list(value)}
                 
-            return {'type': type_name, 'value': value, 'state': 'reactive' if field.startswith('_') else 'normal'}
+            return {'type': type_name, 'value': value}
             
         if hasattr(value, 'to_dict'):
             return {
                 'type': value.__class__.__name__,
                 'value': value.to_dict(),
                 'is_serializable': True,
-                'state': 'reactive' if field.startswith('_') else 'normal'
             }
             
-        return {'type': type(value).__name__, 'value': str(value), 'state': 'reactive' if field.startswith('_') else 'normal'}
+        return {'type': type(value).__name__, 'value': str(value)}
     
     def from_dict(self, data: Dict[str, Any]):
         """

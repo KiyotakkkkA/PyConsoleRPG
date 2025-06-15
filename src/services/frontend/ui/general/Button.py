@@ -2,7 +2,7 @@ from .Text import Text
 from typing import Callable
 from src.services.output import Color, Symbols
 from src.services.events import Keys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Tuple, Callable
 
 if TYPE_CHECKING:
     from src.services.frontend.core.Screen import Screen
@@ -36,7 +36,7 @@ class Button(Text):
         
         self.process_text()
         
-        self.bind_key(Keys.ENTER, self.action)
+        self._events.append((Keys.ENTER, self.action))
         
     def process_text(self):
         self.width = max(len(self.text), self.width)

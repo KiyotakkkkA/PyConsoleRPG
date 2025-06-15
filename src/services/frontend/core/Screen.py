@@ -1,10 +1,13 @@
-from typing import List, Dict, Callable, Set
-from .Component import Component
+from typing import List, Dict, Callable, Set, Tuple, TYPE_CHECKING
 from src.services.output import Color
 from src.services.output.WinConsole import WinConsole
 from src.services.events import EventListener
 from src.services.events.KeyListener import KeyListener, Keys
 from .ScreenPixel import ScreenPixel
+from .Component import Component
+
+if TYPE_CHECKING:
+    from src.services.frontend.ui.containers.Tab import Tab
 
 
 def hash_screen_pixel(char: str, fg_color: str, bg_color: str) -> int:
@@ -32,8 +35,11 @@ class Screen(EventListener):
         self.performance_checker = None
         
         self.key_handlers: Dict[Keys, Set[Callable]] = {}
+        self.components_events: List[Tuple[Keys, Callable]] = []
         
         self.init()
+        
+        self.collect_bind_keys(self)
         
         self._instances[self.__class__.__name__] = self
         
@@ -106,7 +112,23 @@ class Screen(EventListener):
         if key not in self.key_handlers:
             self.key_handlers[key] = set()
         self.key_handlers[key].add(handler)
-    
+        
+    def collect_bind_keys(self, Object: 'Screen | Component | Tab'):
+        from src.services.frontend.ui.containers import Panel, Tab
+        
+        for child in Object.children:
+            if len(child._events) > 0:
+                self.components_events.extend(child._events)
+                
+            if isinstance(child, Panel):
+                self.collect_bind_keys(child)
+            if isinstance(child, Tab):
+                for tab in child.tabs:
+                    self.collect_bind_keys(tab.panel)
+            
+        for event in self.components_events:
+            self.bind_key(event[0], event[1])
+        
     def unbind_key(self, key: Keys, handler: Callable) -> None:
         """
         Отвязка обработчика от нажатия клавиши
@@ -119,6 +141,7 @@ class Screen(EventListener):
             self.key_handlers[key].remove(handler)
         
     def add_child(self, child: Component) -> None:
+        child._screen = self
         self.children.append(child)
         
     def unbind_child(self, child: Component) -> None:

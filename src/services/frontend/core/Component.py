@@ -1,7 +1,11 @@
 from src.entities.interfaces import Computable
-from typing import List, Any, Dict, Set, Callable
+from typing import List, Any, Dict, Set, Callable, Tuple
 from src.services.events.KeyListener import KeyListener, Keys
 from src.services.storage.State import State
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.services.frontend.core.Screen import Screen
 
 class Component(Computable):
     """
@@ -22,10 +26,10 @@ class Component(Computable):
         self.event_handlers: Dict[str, Set[Callable]] = {}
         self.key_handlers: Dict[Keys, Set[Callable]] = {}
         
-        # Флаг отслеживания изменений компонента
         self._changed = True
-        # Кэш для вычислений
         self._cache = {}
+        self._screen: 'Screen' = None
+        self._events: List[Tuple[Keys, Callable]] = []
         
         super().__init__()
         
@@ -113,10 +117,11 @@ class Component(Computable):
         self.children.append(child)
         if name is not None:
             self._components[name] = child
-            child.parent = self
         else:
             self._components[f"{type(child).__name__}{State._components_counter}"] = child
-            child.parent = self
+        
+        child.parent = self
+        child._screen = self._screen
             
     def set_child(self, child: 'Component', name: str = None):
         """
@@ -175,9 +180,11 @@ class Component(Computable):
         self.width = width
         
     def set_x(self, x: int):
+        self.x = x
         self.abs_x = x
         
     def set_y(self, y: int):
+        self.y = y
         self.abs_y = y
     
     def on_key_press(self, key: Keys) -> None:
@@ -252,6 +259,7 @@ class Component(Computable):
         Args:
             screen: Экран, на который производится отрисовка
         """
+        
         if self._changed:
             if self.parent is None:
                 for child in self.children:

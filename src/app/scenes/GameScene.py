@@ -1,6 +1,7 @@
 from src.services.frontend.core import Screen
 from src.services.frontend.ui.containers import Panel, Tab, DialogWindow, Table
 from src.services.frontend.ui.general import Text, Menu, SeparatorItem
+from src.services.frontend.ui.input import Selector
 from src.services.frontend.core.Format import Alignment
 from src.services.events import Keys
 from src.services.output import Color
@@ -13,9 +14,14 @@ class GameScene(Screen):
         
         self.is_in_dialog = False
         
+        self.current_selector = None
+        
         self.temp_items_activities = []
         
+        self.current_display = 'Характеристики'
+        
         self.bind_key(Keys.F1, self.toggle_performance_monitor)
+        self.bind_key(Keys.S, self.toggle_selector)
         self.bind_key(Keys.LEFT, self.to_control_panel)
         self.bind_key(Keys.RIGHT, self.to_main_panel)
         self.bind_key(Keys.ESCAPE, self.ask_to_exit)
@@ -54,37 +60,44 @@ class GameScene(Screen):
         self.performance_vision = not self.performance_vision
         self.enable_performance_monitor(self.performance_vision)
         
+    def toggle_selector(self, data=None):
+        """Переключение активности компонента Selector"""
+        if self.current_selector:
+            if self.tab.get_selection_of_tab_by_id('player'):
+                self.display_selector.set_active(False)
+                self.main_panel.set_selected(True)
+                self.current_selector = None
+                self.current_display = data['value']
+                return
+        
+        if self.main_panel.selected:
+            if self.tab.get_selection_of_tab_by_id('player'):
+                self.main_panel.set_selected(False)
+                self.display_selector.set_active(True)
+                self.current_selector = 'display_selector'
+                return
+        
     def to_control_panel(self):
         """Переключение активной корневой панели"""
+        if not self.main_panel.selected and not self.action_panel.selected: return
+        
         if self.is_in_dialog: return
-        self.main_panel.selected = False
-        self.action_panel.selected = True
-        self.control_activities.is_active = True
+        self.main_panel.set_selected(False)
+        self.action_panel.set_selected(True)
+        self.control_activities.set_active(True)
         self.control_activities.set_selection(0)
         self.inventory_table.set_active(False)
         
-        # перебиндинг клавиш
-        self.unbind_key(Keys.UP, self.inventory_table.move_up)
-        self.unbind_key(Keys.DOWN, self.inventory_table.move_down)
-        
-        self.control_activities.bind_key(Keys.UP, self.control_activities.move_up)
-        self.control_activities.bind_key(Keys.DOWN, self.control_activities.move_down)
-        
     def to_main_panel(self):
         """Переключение активной корневой панели"""
+        if not self.main_panel.selected and not self.action_panel.selected: return
+        
         if self.is_in_dialog: return
-        self.main_panel.selected = True
-        self.action_panel.selected = False
-        self.control_activities.is_active = False
+        self.main_panel.set_selected(True)
+        self.action_panel.set_selected(False)
+        self.control_activities.set_active(False)
         self.control_activities.flush_selection()
         self.inventory_table.set_active(True)
-        
-        # перебиндинг клавиш
-        self.control_activities.unbind_key(Keys.UP, self.control_activities.move_up)
-        self.control_activities.unbind_key(Keys.DOWN, self.control_activities.move_down)
-        
-        self.bind_key(Keys.UP, self.inventory_table.move_up)
-        self.bind_key(Keys.DOWN, self.inventory_table.move_down)
         
     def set_control_panel(self): # Панель навигации
         control_panel_w = self.get_w() // 5
@@ -423,11 +436,23 @@ class GameScene(Screen):
         self.tab1.add_child(self.resources_panel)
         
     def set_tab_player(self):
+        
+        self.display_selector = Selector(self.tab1.x + 3, self.tab1.y + 3, 1, 
+                                 enter_data_event_name="display_selector_enter",
+                                 label_title=f"Вкладка: [S]",
+                                 label_color=Color.BRIGHT_BLACK,
+                                 label_selected_color=Color.BG_BRIGHT_YELLOW,
+                                 label_active_color=Color.BG_BRIGHT_GREEN,
+                                 value_color=Color.BRIGHT_YELLOW,
+                                 selection_type="prev-current-next",
+                                 options=["Характеристики", "Способности"])
+        self.display_selector.current_index = 0
+        
         self.characteristics_panel = Panel(x=self.tab1.x + 1,
-                          y=self.tab1.y + 3,
+                          y=self.tab1.y + 4,
                           width=1,
-                          height=self.tab1.height - 7,
-                          title=" Характеристики ",
+                          height=self.tab1.height - 8,
+                          title=" Основные характеристики ",
                           filler=" ",
                           title_alignment=Alignment.LEFT,
                           border_color=Color.BRIGHT_BLACK,
@@ -454,7 +479,7 @@ class GameScene(Screen):
         self.intelligence_characteristic_value = Text(self.intelligence_characteristic.x + self.intelligence_characteristic.width + 1, self.intelligence_characteristic.y, "", Color.BRIGHT_YELLOW, Color.RESET)
         self.intelligence_description = Text(self.intelligence_characteristic_addition.x, self.intelligence_characteristic_value.y + 1, "- Увеличение этого параметра\nувеличивает максимальный запас аструма\n(астрального вещества,\nнеобходимого для сотворения заклинаний)", Color.BRIGHT_BLACK, Color.RESET)
         
-        
+        self.tab2.add_child(self.display_selector)
         self.tab2.add_child(self.characteristics_panel)
         self.characteristics_panel.add_child(self.speed_characteristic_addition)
         self.characteristics_panel.add_child(self.speed_characteristic)
@@ -524,13 +549,13 @@ class GameScene(Screen):
         self.tab4 = Panel(self.tab.x, self.tab.y, self.main_panel.get_width(), self.get_h(), "", ".", Alignment.LEFT)
         
         self.tab.add_tabs([
-            ("Локация", self.tab1, Keys.L),
-            ("Персонаж", self.tab2, Keys.P),
-            ("Навыки", self.tab4, Keys.A),
-            ("Инвентарь", self.tab3, Keys.I),
-            ("Квесты", self.tab4, Keys.Q),
-            ("Глоссарий", self.tab4, Keys.B),
-            ('Уведомления', self.tab4, Keys.U)
+            ('location', "Локация", self.tab1, Keys.L),
+            ('player', "Персонаж", self.tab2, Keys.P),
+            ('skills', "Навыки", self.tab4, Keys.A),
+            ('inventory', "Инвентарь", self.tab3, Keys.I),
+            ('quests', "Квесты", self.tab4, Keys.Q),
+            ('glossary', "Глоссарий", self.tab4, Keys.B),
+            ('notifications', "Уведомления", self.tab4, Keys.U)
         ])
         
         self.add_child(self.control_panel)
@@ -550,6 +575,7 @@ class GameScene(Screen):
         
         self.on_event("player_move", self.update_location_info)
         self.on_event("player_collect_resource", self.update_inventory_info)
+        self.on_event("display_selector_enter", self.toggle_selector)
         
         self.tab.disable_tab(2)
         self.tab.disable_tab(4)
@@ -663,6 +689,7 @@ class GameScene(Screen):
         
         self.is_in_dialog = True
         self.add_child(self.dialog_window)
+        
                 
     def update(self):
         self.set_player_panel()

@@ -84,8 +84,24 @@ class Player(EventListener, Computable, Serializable):
             'amount': loc["resources"][resource_id]["amount"]
         }
         
+        self._add_resource_to_inventory(resource_id, amount)
+        self.emit_event("player_collect_resource", {"resource_id": resource_id, "amount": amount})
+        
+    def _add_resource_to_inventory(self, resource_id: str, amount: int):
         self.inventory[resource_id] = {
             "amount": self.inventory.get(resource_id, {}).get("amount", 0) + amount,
         }
-        self.emit_event("player_collect_resource", {"resource_id": resource_id, "amount": amount})
+        
+    def _remove_resource_from_inventory(self, resource_id: str, amount: int):
+        total = self.inventory.get(resource_id, {}).get("amount", 0)
+        if total < amount:
+            return False
+        
+        self.inventory[resource_id]["amount"] -= amount
+        
+        if self.inventory[resource_id]["amount"] == 0:
+            del self.inventory[resource_id]
+        
+        return True
+        
         

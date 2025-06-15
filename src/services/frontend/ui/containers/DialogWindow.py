@@ -3,7 +3,7 @@ from src.services.frontend.core import Alignment
 from src.services.output import Color
 from src.services.frontend.ui.general import Button, Text
 from src.services.events import Keys
-from typing import Callable
+from typing import Callable, Tuple, List
 
 class DialogWindow(Panel):
     def __init__(self, x: int, y: int, width: int,
@@ -62,17 +62,17 @@ class DialogWindow(Panel):
     def bind_yes(self, action: Callable[[], None]):
         if self.ctype == "OK" or self.ctype == "YES_NO" or self.ctype == "YES_NO_CANCEL":
             self.buttons[0].action = action
-            self.bind_key(Keys.NUM_1, self.buttons[0].action)
+            self._events.append((Keys.NUM_1, self.buttons[0].action))
     
     def bind_no(self, action: Callable[[], None]):
         if self.ctype == "YES_NO" or self.ctype == "YES_NO_CANCEL":
             self.buttons[1].action = action
-            self.bind_key(Keys.NUM_2, self.buttons[1].action)
+            self._events.append((Keys.NUM_2, self.buttons[1].action))
     
     def bind_cancel(self, action: Callable[[], None]):
         if self.ctype == "YES_NO_CANCEL":
             self.buttons[2].action = action
-            self.bind_key(Keys.NUM_3, self.buttons[2].action)
+            self._events.append((Keys.NUM_3, self.buttons[2].action))
 
         
         

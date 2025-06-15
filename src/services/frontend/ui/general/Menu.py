@@ -3,7 +3,7 @@ from typing import Callable
 from src.services.frontend.core.Component import Component
 from src.services.output import Color
 from src.services.events import Keys
-from typing import Tuple
+from typing import Tuple, List, Callable
 from src.services.frontend.core import Alignment
 from src.config import KEYS_CODES_NAME
 
@@ -76,9 +76,9 @@ class Menu(Component):
         self.reactive('alignment', alignment)
         self.reactive('is_active', is_active)
         
-        self.bind_key(self.control_keys[0], self.move_up)
-        self.bind_key(self.control_keys[1], self.move_down)
-        self.bind_key(self.control_keys[2], self.execute_action)
+        self._events.append((self.control_keys[0], self.move_up))
+        self._events.append((self.control_keys[1], self.move_down))
+        self._events.append((self.control_keys[2], self.execute_action))
         
     def set_active(self, active: bool):
         """Установка активности меню"""
@@ -183,7 +183,7 @@ class Menu(Component):
         
         self.keys_to_item_indexes[key] = len(self.items) - 1
         if key:
-            self.bind_key(key, lambda: self.move_with_key(key))
+            self._events.append((key, lambda: self.move_with_key(key)))
         
     def add_items(self, items: list[(tuple[str, tuple[str, str], int, Callable[[], None]]) | SeparatorItem]):
         """

@@ -10,15 +10,17 @@ if TYPE_CHECKING:
 
 
 class TabItem:
-    def __init__(self, name: str, panel: Panel, key: int):
+    def __init__(self, id: int, name: str, panel: Panel, key: int):
         """
         Инициализация компонента Таб
         
         Args:
+            id: ID таба
             name: Название таба
             panel: Панель, связанная с табом
             key: Клавиша, привязанная к табу
         """
+        self.id = id
         self.name = name
         self.panel = panel
         self.key = key
@@ -53,6 +55,7 @@ class Tab(Component):
         
         self.reactive('active_index', 0)
         self.reactive('tabs', [])
+        self.reactive('tabs_ids', {})
         self.reactive('active_tabs', {})
         self.reactive('keys_to_tab_indexes', {})
         
@@ -64,9 +67,9 @@ class Tab(Component):
         self.reactive('control_keys', control_keys)
         
         if self.control_keys[0]:
-            self.bind_key(self.control_keys[0], self.move_left)
+            self._events.append((self.control_keys[0], self.move_left))
         if self.control_keys[1]:
-            self.bind_key(self.control_keys[1], self.move_right)
+            self._events.append((self.control_keys[1], self.move_right))
             
     def _rebuild_active_links(self):
         active_indexes = [i for i, state in self.active_tabs.items() if state['active']]
@@ -103,8 +106,9 @@ class Tab(Component):
             self.active_tabs[index]['active'] = True
             self._rebuild_active_links()
         
-    def add_tab(self, name: str, panel: Panel, key: int):
+    def add_tab(self, id: int, name: str, panel: Panel, key: int):
         tab_item = TabItem(
+            id=id,
             name=name,
             panel=panel,
             key=key
@@ -125,6 +129,7 @@ class Tab(Component):
         self.active_tabs[0]['prev'] = length - 1
         
         self.keys_to_tab_indexes[key] = length - 1
+        self.tabs_ids[id] = tab_item
         tab_item.panel.x = self.x + self.paddings[3]
         tab_item.panel.y = self.y + self.paddings[0] + 1
         tab_item.panel.width = self.width - self.paddings[2] - self.paddings[3]
@@ -132,11 +137,17 @@ class Tab(Component):
         tab_item.panel.border_color = Color.BLACK
         
         if key:
-            self.bind_key(key, lambda: self.move_with_key(key))
+            self._events.append((key, lambda: self.move_with_key(key)))
         
-    def add_tabs(self, tabs: List[Tuple[str, Panel, int]]):
+    def add_tabs(self, tabs: List[Tuple[int, str, Panel, int]]):
         for tab in tabs:
-            self.add_tab(tab[0], tab[1], tab[2])
+            self.add_tab(tab[0], tab[1], tab[2], tab[3])
+            
+    def get_tab_by_id(self, id: int):
+        return self.tabs_ids[id]
+    
+    def get_selection_of_tab_by_id(self, id: int):
+        return self.tabs[self.active_index].id == id
         
     def draw(self, screen: 'Screen') -> None:
         self.calculate()
