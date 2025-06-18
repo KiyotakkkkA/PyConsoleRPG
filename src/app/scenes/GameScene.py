@@ -62,6 +62,17 @@ class GameScene(Screen):
         
     def toggle_selector(self, data=None):
         """Переключение активности компонента Selector"""
+        
+        if self.main_panel.selected:
+            if self.tab.get_selection_of_tab_by_id('player'):
+                self.main_panel.set_selected(False)
+                self.display_selector.set_active(True)
+                self.current_selector = 'display_selector'
+                return
+        
+    def toggle_selector_event(self, data):
+        """Переключение активности компонента Selector"""
+        
         if self.current_selector:
             if self.tab.get_selection_of_tab_by_id('player'):
                 self.display_selector.set_active(False)
@@ -573,14 +584,24 @@ class GameScene(Screen):
         self.action_panel.selected = True
         self.control_activities.is_active = True
         
+        self.dialog_window = DialogWindow(x=self.get_w() // 2 - 20,
+                                          y=self.get_h() // 2 - 25,
+                                          width=40,
+                                          height=7,
+                                          text="Вы уверены, что хотите выйти?",
+                                          ctype="YES_NO",
+                                          text_color=Color.BRIGHT_YELLOW)
+        
         self.on_event("player_move", self.update_location_info)
         self.on_event("player_collect_resource", self.update_inventory_info)
-        self.on_event("display_selector_enter", self.toggle_selector)
+        self.on_event("display_selector_enter", self.toggle_selector_event)
         
         self.tab.disable_tab(2)
         self.tab.disable_tab(4)
         self.tab.disable_tab(5)
         self.tab.disable_tab(6)
+        
+        self.control_activities.set_active(True)
         
         self.finalize()
         
@@ -659,36 +680,29 @@ class GameScene(Screen):
         self.endurance_characteristic_value.set_text(f"{Game.player.total_endurance}")
         self.intelligence_characteristic_value.set_text(f"{Game.player.total_intelligence}")
         
-    def ask_to_exit(self):
+    def dialog_exit_game(self):
         from src.Game import Game
         
-        if self.dialog_window: return
-        
-        self.dialog_window = DialogWindow(x=self.get_w() // 2 - 20,
-                                          y=self.get_h() // 2 - 25,
-                                          width=40,
-                                          height=7,
-                                          text="Вы уверены, что хотите выйти?",
-                                          ctype="YES_NO",
-                                          text_color=Color.BRIGHT_YELLOW)
-        
-        def exit_game():
-            self.unbind_child(self.dialog_window)
-            self.dialog_window = None
-            self.is_in_dialog = False
-            Game.screen_manager.navigate_to_screen('main')
+        self.dialog_window.set_active(False)
+        self.unbind_child(self.dialog_window)
+        self.is_in_dialog = False
+        Game.screen_manager.navigate_to_screen('main')
             
-        def close_dialog():
-            self.unbind_child(self.dialog_window)
-            self.dialog_window = None
-            self.is_in_dialog = False
-            
+    def dialog_close_dialog(self):
+        self.dialog_window.set_active(False)
+        self.unbind_child(self.dialog_window)
+        self.is_in_dialog = False
         
-        self.dialog_window.bind_yes(exit_game)
-        self.dialog_window.bind_no(close_dialog)
+    def ask_to_exit(self):        
+        if self.is_in_dialog: return
         
         self.is_in_dialog = True
+        
         self.add_child(self.dialog_window)
+        self.dialog_window.set_active(True)
+        
+        self.dialog_window.bind_yes(self.dialog_exit_game)
+        self.dialog_window.bind_no(self.dialog_close_dialog)
         
                 
     def update(self):

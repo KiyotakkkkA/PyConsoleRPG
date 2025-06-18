@@ -101,7 +101,8 @@ class Input(Component):
                  enter_type: str = "text",
                  enter_data_event_name: str = "enter_data",
                  solo_key_brackets: str = "br_none",
-                 end_symbol="_"):
+                 end_symbol="_",
+                 max_length: int = 15):
         """
         Инициализация компонента Input
         
@@ -120,6 +121,7 @@ class Input(Component):
             solo_key_brackets: Тип скобок для одиночного ключа
             enter_data_event_name: Имя события, которое будет генерироваться при нажатии Enter
             end_symbol: Символ, который будет добавляться в конец вводимого текста
+            max_length: Максимальная длина вводимого текста
             - Возможные значения для solo_key_brackets:
                 br_square: []\n
                 br_round: ()\n
@@ -130,8 +132,6 @@ class Input(Component):
         """
         super().__init__(x, y, width, 1, (0, 0, 0, 0))
         
-        self.reactive('selected', False)
-        self.reactive('active', False)
         self.reactive('input_value', "")
         self.reactive('enter_type', enter_type)
         self.reactive('label_color', label_color)
@@ -143,6 +143,7 @@ class Input(Component):
         self.reactive('end_symbol', end_symbol)
         self.reactive('solo_key_brackets', solo_key_brackets)
         self.reactive('enter_data_event_name', enter_data_event_name)
+        self.reactive('max_length', max_length)
         
         if not enter_type in self.__allowed_enter_types:
             raise ValueError(f"Invalid enter_type: {enter_type}")
@@ -161,24 +162,6 @@ class Input(Component):
         self._events.append((Keys.ENTER, self._on_enter))
         
         self._bind_to_keys()
-    
-    def set_selected(self, selected: bool):
-        """
-        Установка фокуса на компоненте
-        
-        Args:
-            selected: Флаг фокуса
-        """
-        self.selected = selected
-    
-    def set_active(self, active: bool):
-        """
-        Установка активности компонента
-        
-        Args:
-            active: Флаг активности
-        """
-        self.active = active
         
     def set_label_width(self, width: int):
         """
@@ -202,6 +185,9 @@ class Input(Component):
     def _set_text(self, text: str):
         self.input_value = text
         data_to_display = text
+        
+        if len(self.input_value) > self.max_length:
+            self.input_value = self.input_value[:self.max_length]
         
         if self._is_type_a_text() and self.active:
             data_to_display = self.input_value + self.end_symbol
@@ -227,13 +213,10 @@ class Input(Component):
         
     def _on_enter(self):
         
-        if not self.selected:
-            return
-        
-        if not self.active:
+        if not self.active and self.selected:
             if self._is_type_a_solo_key():
                 self._set_text('')
-            self.active = True
+            self.set_active(True)
             return
         
         if self._is_type_a_text():
@@ -243,15 +226,14 @@ class Input(Component):
             
     def _on_enter_text(self):
         if self.active:
-            self.active = False
-            
+            self.set_active(False)
             self._set_text(self.input_text.text[:-1])
             
             EventSystem().emit(self.enter_data_event_name, {'value': self.input_text.text[:-1]})
             
     def _on_enter_solo_key(self):
         if self.active:
-            self.active = False
+            self.set_active(False)
             EventSystem().emit(self.enter_data_event_name, {'value': self.input_value})
             
     def _on_key_press(self, key: int):

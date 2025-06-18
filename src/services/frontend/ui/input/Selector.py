@@ -53,10 +53,6 @@ class Selector(Component):
                 prev-current-next: prev < data > next
         """
         super().__init__(x, y, width, 1, (0, 0, 0, 0))
-
-        
-        self.reactive('selected', False)
-        self.reactive('active', False)
         
         self.reactive('enter_data_event_name', enter_data_event_name)
         self.reactive('label_title', label_title)
@@ -107,24 +103,6 @@ class Selector(Component):
         self._events.append((Keys.LEFT, self._select_backward))
         self._events.append((Keys.RIGHT, self._select_forward))
         self._events.append((Keys.ENTER, self._on_enter))
-    
-    def set_selected(self, selected: bool):
-        """
-        Установка фокуса на компоненте
-        
-        Args:
-            selected: Флаг фокуса
-        """
-        self.selected = selected
-    
-    def set_active(self, active: bool):
-        """
-        Установка активности компонента
-        
-        Args:
-            active: Флаг активности
-        """
-        self.active = active
         
     def set_label_text(self, text: str):
         """

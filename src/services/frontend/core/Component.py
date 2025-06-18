@@ -37,6 +37,9 @@ class Component(Computable):
         self.reactive('height', height)
         self.reactive('paddings', paddings)
         
+        self.reactive('active', False)
+        self.reactive('selected', False)
+        
         self.reactive('children', [])
         self.reactive('parent', None)
         self.reactive('_components', {})
@@ -48,6 +51,24 @@ class Component(Computable):
         
         self.computed('inner_width', lambda: self.width - self.paddings[2] - self.paddings[3], ['width', 'paddings'])
         self.computed('inner_height', lambda: self.height - self.paddings[0] - self.paddings[1], ['height', 'paddings'])
+        
+    def set_active(self, active: bool):
+        """
+        Устанавливает активность компонента
+        
+        Args:
+            active: Флаг активности
+        """
+        self.active = active
+        
+    def set_selected(self, selected: bool):
+        """
+        Устанавливает выделенность компонента
+        
+        Args:
+            selected: Флаг выделенности
+        """
+        self.selected = selected
         
     def on_event(self, event_name: str, handler: callable):
         """

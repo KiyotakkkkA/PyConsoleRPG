@@ -15,10 +15,26 @@ class MainScene(Screen):
         self.bind_key(Keys.F1, self.toggle_performance_monitor)
         
     @staticmethod
-    def start_game():
+    def new_game():
+        ScreenManager.navigate_to_screen("new_game")
+        
+    @staticmethod
+    def continue_game():
         from src.Game import Game
-        Game.load()
-        ScreenManager.navigate_to_screen("game")
+        if Game.load():
+            ScreenManager.navigate_to_screen("game")
+        
+    @staticmethod
+    def settings():
+        ScreenManager.navigate_to_screen("settings")
+        
+    @staticmethod
+    def controls():
+        ScreenManager.navigate_to_screen("controls")
+        
+    @staticmethod
+    def load_game():
+        ScreenManager.navigate_to_screen("load_game")
     
     @staticmethod
     def exit():
@@ -36,7 +52,7 @@ class MainScene(Screen):
         self.main_panel = Panel(1, 1, self.get_w() - 2, self.get_h() - 2, "", border_color=Color.WHITE, title_color=Color.YELLOW)
         self.add_child(self.main_panel)
         
-        title_art = ToArtConverter.text_to_art("UPDATE TITLE")
+        title_art = ToArtConverter.text_to_art("Обновление")
         title_x = self.get_w() // 2 - len(title_art[0]) // 2 + 1
         title_y = self.get_h() // 10
         
@@ -50,10 +66,11 @@ class MainScene(Screen):
         self.add_child(self.menu)
         
         self.menu.add_items([
-            (("Новая игра", Color.WHITE), Keys.N, lambda: MainScene.start_game()),
-            (("Загрузить игру", Color.WHITE), Keys.L, lambda: print("Загрузить игру")),
-            (("Настройки", Color.WHITE), Keys.S, lambda: ScreenManager.navigate_to_screen("settings")),
-            (("Управление", Color.WHITE), Keys.C, lambda: print("Управление")),
+            (("Продолжить игру", Color.WHITE), Keys.Q, lambda: MainScene.continue_game()),
+            (("Новая игра", Color.WHITE), Keys.N, lambda: MainScene.new_game()),
+            (("Загрузить игру", Color.WHITE), Keys.L, lambda: MainScene.load_game()),
+            (("Настройки", Color.WHITE), Keys.S, lambda: MainScene.settings()),
+            (("Управление", Color.WHITE), Keys.C, lambda: MainScene.controls()),
             (("Выход", Color.WHITE), Keys.Q, lambda: MainScene.exit()),
         ])
         

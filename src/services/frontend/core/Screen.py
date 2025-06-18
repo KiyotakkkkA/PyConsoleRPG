@@ -114,7 +114,7 @@ class Screen(EventListener):
         self.key_handlers[key].add(handler)
         
     def collect_bind_keys(self, Object: 'Screen | Component | Tab'):
-        from src.services.frontend.ui.containers import Panel, Tab
+        from src.services.frontend.ui.containers import Panel, Tab, DialogWindow
         
         for child in Object.children:
             if len(child._events) > 0:

@@ -44,7 +44,6 @@ class Menu(Component):
                  y: int,
                  paddings: Tuple[int, int, int, int] = (1, 10, 1, 1),
                  gap: int = 1,
-                 is_active: bool = False,
                  inactive_menu_color: str = Color.RESET,
                  active_menu_color: str = Color.YELLOW,
                  control_keys: Tuple[int, int, int] = (Keys.UP, Keys.DOWN, Keys.ENTER),
@@ -74,15 +73,10 @@ class Menu(Component):
         self.reactive('active_menu_color', active_menu_color)
         self.reactive('control_keys', control_keys)
         self.reactive('alignment', alignment)
-        self.reactive('is_active', is_active)
         
         self._events.append((self.control_keys[0], self.move_up))
         self._events.append((self.control_keys[1], self.move_down))
         self._events.append((self.control_keys[2], self.execute_action))
-        
-    def set_active(self, active: bool):
-        """Установка активности меню"""
-        self.is_active = active
         
     def flush_selection(self):
         """Сброс выбора"""
@@ -94,7 +88,7 @@ class Menu(Component):
             self.active_index = index % len(self.items)
         
     def execute_action(self):
-        if not self.is_active:
+        if not self.active:
             return
         
         if self.items and self.active_index >= 0:
@@ -103,7 +97,7 @@ class Menu(Component):
             self.items[len(self.items) - abs(self.active_index)].action()
         
     def move_with_key(self, key: int):
-        if not self.is_active:
+        if not self.active:
             return
         
         if self.items and key in self.keys_to_item_indexes:
@@ -111,7 +105,7 @@ class Menu(Component):
             self.execute_action()
         
     def move_up(self):
-        if not self.is_active:
+        if not self.active:
             return
         
         if self.items:
@@ -120,7 +114,7 @@ class Menu(Component):
                 self.active_index = (self.active_index - 1) % len(self.items)
             
     def move_down(self):
-        if not self.is_active:
+        if not self.active:
             return
         
         if self.items:

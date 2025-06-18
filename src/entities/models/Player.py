@@ -7,6 +7,9 @@ class Player(EventListener, Computable, Serializable):
         self.is_new = True
         self.initial_location = "main_ruins_of_origins"
         self.initial_region = "main_tierenhall_kingdom"
+        self.initial_name = 'BASE_PLAYER'
+        
+        self.reactive('name', self.initial_name)
         
         self.reactive('base_location_relax_time', 5)
         self.reactive('base_speed', 1)
@@ -50,6 +53,10 @@ class Player(EventListener, Computable, Serializable):
             self.current_location = self.initial_location
             self.current_region = self.initial_region
             self.current_level = self.initial_level
+            
+    def set_name(self, name: str):
+        self.name = name
+        self.emit_event("player_name_set", {"name": name})
             
     def get_location_relax_time(self):
         return (1 / self.speed) * self.location_relax_time

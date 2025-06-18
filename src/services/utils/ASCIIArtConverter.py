@@ -1,3 +1,5 @@
+from src.services.utils.extensions.ascii.rus_alph import RUS_LETTERS
+
 LETTERS = {
     'a': [
         " █████╗ ",
@@ -392,6 +394,8 @@ LETTERS = {
         "    ╚═╝"
     ]
 }
+
+LETTERS.update(RUS_LETTERS)
 
 class ToArtConverter:
     """

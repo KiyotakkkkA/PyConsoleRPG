@@ -60,8 +60,8 @@ class Table(Component):
         self.reactive('overflowing_symbol', overflowing_symbol)
         self.reactive('border_color', border_color)
         self.reactive('total_rows_count', 0)
+        self.reactive('actions', {})
         
-        self.reactive('is_active', False)
         self.reactive('current_selected_row', 0)
         self.reactive('max_rows', max_rows)
         self.reactive('start_row', 0)
@@ -69,24 +69,28 @@ class Table(Component):
         
         self._events.append((Keys.UP, self.move_up))
         self._events.append((Keys.DOWN, self.move_down))
+        self._events.append((Keys.ENTER, self.process_action))
         
         self.count_headers_size()
-        
-    def set_active(self, active: bool):
-        self.is_active = active
         
     def set_selected_row(self, row: int):
         self.current_selected_row = max(0, min(row, len(self.rows) - 1))
         
+    def process_action(self):
+        if not self.active: return
+        if self.current_selected_row in self.actions:
+            if self.actions[self.current_selected_row]:
+                self.actions[self.current_selected_row]()
+        
     def move_up(self):
-        if not self.is_active: return
+        if not self.active: return
         self.set_selected_row(self.current_selected_row - 1)
         if self.current_selected_row < self.start_row:
             self.start_row -= 1
             self.end_row -= 1
         
     def move_down(self):
-        if not self.is_active: return
+        if not self.active: return
         self.set_selected_row(self.current_selected_row + 1)
         if self.current_selected_row >= self.end_row:
             self.start_row += 1
@@ -131,7 +135,7 @@ class Table(Component):
             current_x += true_width
             column_index += 1
             
-    def add_row(self, row: list[str], colors: list[tuple[str, str]] = []):
+    def add_row(self, row: list[str], colors: list[tuple[str, str]] = [], action: Callable = None):
         if self.add_numeration:
             row.insert(0, str(len(self.rows) + 1))
         if not colors:
@@ -140,22 +144,25 @@ class Table(Component):
         self.rows_colors.append(colors)
         self.end_row = min(self.max_rows, len(self.rows))
         self.total_rows_count = len(self.rows)
+        self.actions[len(self.rows) - 1] = action
         
-    def add_rows(self, rows: list[list[str]] = [], colors: list[list[tuple[str, str]]] = []):
+    def add_rows(self, rows: list[list[str]] = [], colors: list[list[tuple[str, str]]] = [], actions: list[Callable] = []):
         for i in range(len(rows)):
-            self.add_row(rows[i], colors[i])
+            self.add_row(rows[i], colors[i], actions[i] if i < len(actions) else None)
             
-    def set_row(self, row: int, data: list[str], colors: list[tuple[str, str]] = []):
+    def set_row(self, row: int, data: list[str], colors: list[tuple[str, str]] = [], action: Callable = None):
         if not colors:
             colors = [(Color.WHITE, Color.RESET) for _ in range(len(data))]
         self.rows[row] = data
         self.rows_colors[row] = colors
+        self.actions[row] = action
         
-    def set_rows(self, rows: list[list[str]], colors: list[list[tuple[str, str]]] = []):
+    def set_rows(self, rows: list[list[str]], colors: list[list[tuple[str, str]]] = [], actions: list[Callable] = []):
         self.rows = []
         self.rows_colors = []
+        self.actions = {}
         
-        self.add_rows(rows, colors)
+        self.add_rows(rows, colors, actions)
         
     def draw(self, screen: 'Screen'):
         screen.draw_text(self.x, self.y, Symbols.BORDERS.TOP_LEFT + Symbols.BORDERS.TOP * (self.width - 1) + Symbols.BORDERS.TOP_RIGHT, self.border_color, Color.RESET)
@@ -178,8 +185,8 @@ class Table(Component):
                 
                 text_x = self.calculate_aligned_x(self.headers_data[j]['x'], self.headers_data[j]['true_width'], len(self.rows[i][j]), self.row_alignment)
                 
-                fgcolor = self.selected_row_color if i == self.current_selected_row and self.is_active else self.rows_colors[i][j][0]
-                bgcolor = self.selected_row_color if i == self.current_selected_row and self.is_active else self.rows_colors[i][j][1]
+                fgcolor = self.selected_row_color if i == self.current_selected_row and self.active else self.rows_colors[i][j][0]
+                bgcolor = self.selected_row_color if i == self.current_selected_row and self.active else self.rows_colors[i][j][1]
                 
                 text = self.truncate_text(self.rows[i][j], self.headers_data[j]['true_width'])
                 

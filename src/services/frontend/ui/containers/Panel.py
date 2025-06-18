@@ -47,7 +47,6 @@ class Panel(Component):
         self.reactive('border_color_selected', border_color_selected)
         self.reactive('title_color', title_color)
         
-        self.reactive('selected', False)
         self.reactive('auto_resize', auto_resize)
         
         self.computed('true_width', lambda: max(len(self.title) + 2, self.width - 2), ['title', 'width'])
@@ -67,9 +66,6 @@ class Panel(Component):
         
     def set_title(self, title: str):
         self.title = title
-        
-    def set_selected(self, selected: bool):
-        self.selected = selected
         
     def calculate(self):
         """

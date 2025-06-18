@@ -6,6 +6,14 @@ from src.services.events import Keys
 from typing import Callable, Tuple, List
 
 class DialogWindow(Panel):
+    
+    __phrases = {
+        'OK': 'Хорошо [1]',
+        'YES': 'Да [1]',
+        'NO': 'Нет [2]',
+        'CANCEL': 'Отмена [3]'
+    }
+    
     def __init__(self, x: int, y: int, width: int,
                  height: int, filler=" ",
                  text: str = "",
@@ -39,40 +47,51 @@ class DialogWindow(Panel):
         
         self._types = {
             "OK": [
-                Button(self.x + self.width // 2 - 6, self.y + self.height - 2, 10, "Хорошо [1]", lambda: None)
+                Button(self.x + 2, self.y + self.height - 2, 1, self.__phrases['OK'], lambda: None)
             ],
             "YES_NO": [
-                Button(self.x + self.width // 2 - 18, self.y + self.height - 2, 10, "Да [1]", lambda: None),
-                Button(self.x + self.width // 2 + 10, self.y + self.height - 2, 10, "Нет [2]", lambda: None)
+                Button(self.x + 2, self.y + self.height - 2, 1, self.__phrases['YES'], lambda: None),
+                Button(self.x + (self.width - len(self.__phrases['NO'])) // 2, self.y + self.height - 2, 1, self.__phrases['NO'], lambda: None)
             ],
             "YES_NO_CANCEL": [
-                Button(self.x + self.width // 2 - 19, self.y + self.height - 2, 10, "Да [1]", lambda: None),
-                Button(self.x + self.width // 2 + 5, self.y + self.height - 2, 10, "Нет [2]", lambda: None),
-                Button(self.x + self.width // 2 + 30, self.y + self.height - 2, 10, "Отмена [3]", lambda: None)
+                Button(self.x + 2, self.y + self.height - 2, 1, self.__phrases['YES'], lambda: None),
+                Button(self.x + self.width // 3 - (len(self.__phrases['NO']) // 2), self.y + self.height - 2, 1, self.__phrases['NO'], lambda: None),
+                Button(self.x + self.width // 3 * 2 - (len(self.__phrases['CANCEL']) // 2), self.y + self.height - 2, 1, self.__phrases['CANCEL'], lambda: None)
             ]
         }
         
-        self.text = Text(self.x + (self.width - len(self.text)) // 2, self.y + 1, self.text, self.text_color, Color.RESET)
+        self.text = Text(self.x + 2, self.y + 1, self.text, self.text_color, Color.RESET)
         
         self.buttons = self._types[self.ctype]
         self.set_children(self.buttons)
         
         self.add_child(self.text)
         
+    def set_text_color(self, color: str):
+        self.text_color = color
+        self.text.fg_color = color
+    
+    def set_text(self, text: str):
+        self.text.set_text(text)
+        
     def bind_yes(self, action: Callable[[], None]):
         if self.ctype == "OK" or self.ctype == "YES_NO" or self.ctype == "YES_NO_CANCEL":
             self.buttons[0].action = action
-            self._events.append((Keys.NUM_1, self.buttons[0].action))
+            self._screen.bind_key(Keys.NUM_1, lambda: self.process_action(action))
     
     def bind_no(self, action: Callable[[], None]):
         if self.ctype == "YES_NO" or self.ctype == "YES_NO_CANCEL":
             self.buttons[1].action = action
-            self._events.append((Keys.NUM_2, self.buttons[1].action))
+            self._screen.bind_key(Keys.NUM_2, lambda: self.process_action(action))
     
     def bind_cancel(self, action: Callable[[], None]):
         if self.ctype == "YES_NO_CANCEL":
             self.buttons[2].action = action
-            self._events.append((Keys.NUM_3, self.buttons[2].action))
+            self._screen.bind_key(Keys.NUM_3, lambda: self.process_action(action))
+            
+    def process_action(self, action: Callable[[], None]):
+        if not self.active: return
+        action()
 
         
         

@@ -1,9 +1,10 @@
 from src.services.backend.registers import RegistryLocation, RegistryRegion, RegistryItems
 from src.entities.models import Player
 from src.entities.interfaces import Serializable
-from src.app.scenes import MainScene, GameScene, SettingsScene
+from src.app.scenes import MainScene, GameScene, SettingsScene, NewGameScreen, LoadGameScreen
 from src.services.frontend.core import ScreenManager
 import time
+import json
 import os
 
 class GameState(Serializable):
@@ -36,10 +37,14 @@ class GameState(Serializable):
 
 
 class Game:
+    
+    __allowed_ext__ = [".json"]
+    
     DEBUG = True
     
     SAVES_DIR = 'saves'
-    CURRENT_PLAYER_NAME = "test"
+    GAME_WAS_LOADED_SUCCESSFULLY = False
+    CURRENT_LOADING_PLAYER = None
     
     # Игрок
     player = Player()
@@ -58,7 +63,9 @@ class Game:
     screens = {
         "main": MainScene,
         "game": GameScene,
-        "settings": SettingsScene
+        "settings": SettingsScene,
+        "new_game": NewGameScreen,
+        "load_game": LoadGameScreen
     }
     
     # Экраны
@@ -67,12 +74,39 @@ class Game:
     # Текущий экран
     current_screen = None
     
+    @classmethod
+    def add_json_meta_file(cls, file_path: str, data: dict):
+        if os.path.splitext(file_path)[1] not in cls.__allowed_ext__:
+            raise ValueError(f"Недопустимый формат файла: {os.path.splitext(file_path)[1]}")
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(data, ensure_ascii=False, indent=2))
+    
+    @classmethod
+    def new_game(cls, new_player_data: dict):
+        cls.player = Player()
+        cls.game_state = GameState()
+        
+        cls.player.set_name(new_player_data['name'])
+        
+        cls.GAME_WAS_LOADED_SUCCESSFULLY = True
+        cls.save()
+        cls.screen_manager.navigate_to_screen("game")
+    
     @staticmethod
-    def save():  
-        if not os.path.exists(f"{Game.SAVES_DIR}/{Game.CURRENT_PLAYER_NAME}"):
-            os.makedirs(f"{Game.SAVES_DIR}/{Game.CURRENT_PLAYER_NAME}")
-        Game.player.dump_to_file(f"{Game.SAVES_DIR}/{Game.CURRENT_PLAYER_NAME}/playerdata.json")
-        Game.game_state.dump_to_file(f"{Game.SAVES_DIR}/{Game.CURRENT_PLAYER_NAME}/gamestate.json")
+    def save():
+        if not Game.GAME_WAS_LOADED_SUCCESSFULLY: return
+        if not os.path.exists(f"{Game.SAVES_DIR}/{Game.player.name}"):
+            os.makedirs(f"{Game.SAVES_DIR}/{Game.player.name}")
+        Game.player.dump_to_file(f"{Game.SAVES_DIR}/{Game.player.name}/playerdata.json")
+        Game.game_state.dump_to_file(f"{Game.SAVES_DIR}/{Game.player.name}/gamestate.json")
+        
+        Game.add_json_meta_file(f"{Game.SAVES_DIR}/{Game.player.name}/meta.json", {
+            "player_name": Game.player.name,
+            'player_level': Game.player.current_level,
+            'last_save_time': time.time(),
+        })
         
     @staticmethod
     def _load_set_resources_amount():
@@ -82,11 +116,18 @@ class Game:
     
     @staticmethod
     def load():
-        if os.path.exists(f"{Game.SAVES_DIR}/{Game.CURRENT_PLAYER_NAME}/playerdata.json"):
-            Player.apply(Game.player, f"{Game.SAVES_DIR}/{Game.CURRENT_PLAYER_NAME}/playerdata.json")
-        if os.path.exists(f"{Game.SAVES_DIR}/{Game.CURRENT_PLAYER_NAME}/gamestate.json"):
-            GameState.apply(Game.game_state, f"{Game.SAVES_DIR}/{Game.CURRENT_PLAYER_NAME}/gamestate.json")
+        PLAYER_DATA_LOAD = False
+        GAME_STATE_LOAD = False
+        if os.path.exists(f"{Game.SAVES_DIR}/{Game.CURRENT_LOADING_PLAYER}/playerdata.json"):
+            Player.apply(Game.player, f"{Game.SAVES_DIR}/{Game.CURRENT_LOADING_PLAYER}/playerdata.json")
+            PLAYER_DATA_LOAD = True
+        if os.path.exists(f"{Game.SAVES_DIR}/{Game.CURRENT_LOADING_PLAYER}/gamestate.json"):
+            GameState.apply(Game.game_state, f"{Game.SAVES_DIR}/{Game.CURRENT_LOADING_PLAYER}/gamestate.json")
             Game._load_set_resources_amount()
+            GAME_STATE_LOAD = True
+        
+        Game.GAME_WAS_LOADED_SUCCESSFULLY = PLAYER_DATA_LOAD and GAME_STATE_LOAD and Game.CURRENT_LOADING_PLAYER is not None
+        return Game.GAME_WAS_LOADED_SUCCESSFULLY
     
     @classmethod
     def time_count_with_fps(cls):
