@@ -18,6 +18,7 @@ class LoadGameScreen(Screen):
         
         self.bind_key(Keys.F1, self.toggle_performance_monitor)
         self.bind_key(Keys.ESCAPE, self.ask_to_return)
+        self.bind_key(Keys.X, self.ask_to_delete_save)
         
     def toggle_performance_monitor(self):
         """Включение/выключение монитора производительности"""
@@ -43,6 +44,15 @@ class LoadGameScreen(Screen):
                                           ctype="YES_NO",
                                           text_color=Color.BRIGHT_YELLOW)
         
+        sure_to_delete_text = "Вы уверены, что хотите удалить это сохранение?"
+        self.sure_to_delete_window = DialogWindow(x=self.get_w() // 2 - 20,
+                                                  y=self.get_h() // 2 - 25,
+                                                  width=40,
+                                                  height=9,
+                                                  text=sure_to_delete_text,
+                                                  ctype="YES_NO",
+                                                  text_color=Color.BRIGHT_RED)
+        
         self.saves_table = Table(10, 12, self.get_w() - 20, [
             "Персонаж",
             'Уровень',
@@ -58,7 +68,7 @@ class LoadGameScreen(Screen):
         self.help_panel_w = self.get_w() - 2
         self.help_panel = Panel(1, self.get_h() - self.help_panel_height, self.help_panel_w, self.help_panel_height, "", " ", Alignment.LEFT, border_color=Color.BRIGHT_BLACK, paddings=(1, 0, 0, 0))
         
-        text = Text(self.help_panel.x + 1, self.help_panel.y, "↑↓: Навигация, Enter: Загрузить, Esc: Назад, F1: Монитор производительности", Color.BRIGHT_BLACK, Color.RESET)
+        text = Text(self.help_panel.x + 1, self.help_panel.y, "↑↓: Навигация, Enter: Загрузить, Esc: Назад, F1: Монитор производительности, X: Удалить сохранение", Color.BRIGHT_BLACK, Color.RESET)
         self.help_panel.add_child(text)
         
         self.add_child(self.saves_table)
@@ -116,7 +126,35 @@ class LoadGameScreen(Screen):
         self.dialog_window.set_active(True)
         
         self.dialog_window.bind_yes(self.dialog_return_to_menu)
-        self.dialog_window.bind_no(self.dialog_close_dialog)
+        self.dialog_window.bind_no(self.dialog_close_dialog_return_to_menu)
+        
+    def ask_to_delete_save(self):        
+        if self.is_in_dialog: return
+        
+        self.is_in_dialog = True
+        
+        self.add_child(self.sure_to_delete_window)
+        self.sure_to_delete_window.set_active(True)
+        
+        data = self.saves_table.get_selected_row_data()
+        if data:
+            self.sure_to_delete_window.set_text(f"Вы уверены, что хотите удалить сохранение?\n\nСледующий персонаж будет удален:\n\n[{data[1]}]")
+        
+        self.sure_to_delete_window.bind_yes(self.dialog_delete_save)
+        self.sure_to_delete_window.bind_no(self.dialog_close_delete_save)
+        
+    def dialog_delete_save(self):
+        from src.Game import Game
+        if Game.delete_save(self.saves_table.get_selected_row_data()[1]):
+            self.sure_to_delete_window.set_active(False)
+            self.unbind_child(self.sure_to_delete_window)
+            self.is_in_dialog = False
+            self.find_saves()
+        
+    def dialog_close_delete_save(self):
+        self.sure_to_delete_window.set_active(False)
+        self.unbind_child(self.sure_to_delete_window)
+        self.is_in_dialog = False
     
     def dialog_return_to_menu(self):
         from src.Game import Game
@@ -126,7 +164,7 @@ class LoadGameScreen(Screen):
         self.is_in_dialog = False
         Game.screen_manager.navigate_to_screen('main')
             
-    def dialog_close_dialog(self):
+    def dialog_close_dialog_return_to_menu(self):
         self.dialog_window.set_active(False)
         self.unbind_child(self.dialog_window)
         self.is_in_dialog = False

@@ -3,6 +3,7 @@ from src.entities.models import Player
 from src.entities.interfaces import Serializable
 from src.app.scenes import MainScene, GameScene, SettingsScene, NewGameScreen, LoadGameScreen
 from src.services.frontend.core import ScreenManager
+from src.config.Config import Config
 import time
 import json
 import os
@@ -42,7 +43,8 @@ class Game:
     
     DEBUG = True
     
-    SAVES_DIR = 'saves'
+    SAVES_DIR = Config.SAVES_DIR
+    
     GAME_WAS_LOADED_SUCCESSFULLY = False
     CURRENT_LOADING_PLAYER = None
     
@@ -61,11 +63,26 @@ class Game:
     
     # Регистрация экранов
     screens = {
-        "main": MainScene,
-        "game": GameScene,
-        "settings": SettingsScene,
-        "new_game": NewGameScreen,
-        "load_game": LoadGameScreen
+        "main": {
+                 "screen": MainScene,
+                 "bg_music": "main_menu_ambient.mp3"
+                 },
+        "game": {
+                 "screen": GameScene,
+                 "bg_music": ""
+                 },
+        "settings": {
+                 "screen": SettingsScene,
+                 "bg_music": ""
+                 },
+        "new_game": {
+                 "screen": NewGameScreen,
+                 "bg_music": ""
+                 },
+        "load_game": {
+                 "screen": LoadGameScreen,
+                 "bg_music": ""
+                 }
     }
     
     # Экраны
@@ -113,6 +130,19 @@ class Game:
         for loc in Game.game_state.loc_res_meta:
             for res in Game.game_state.loc_res_meta[loc]:
                 Game.locations[loc]["resources"][res]["amount"] = Game.game_state.loc_res_meta[loc][res]["amount"]
+                
+    @staticmethod
+    def delete_save(save_name: str):
+        try:
+            os.remove(f"{Game.SAVES_DIR}/{save_name}/playerdata.json")
+            os.remove(f"{Game.SAVES_DIR}/{save_name}/gamestate.json")
+            os.remove(f"{Game.SAVES_DIR}/{save_name}/meta.json")
+            
+            os.rmdir(f"{Game.SAVES_DIR}/{save_name}")
+            return True
+        except Exception as e:
+            print(f"[ERROR] Не удалось удалить сохранение: {e}")
+            return False
     
     @staticmethod
     def load():

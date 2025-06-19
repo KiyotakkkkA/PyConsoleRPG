@@ -47,7 +47,9 @@ class Menu(Component):
                  inactive_menu_color: str = Color.RESET,
                  active_menu_color: str = Color.YELLOW,
                  control_keys: Tuple[int, int, int] = (Keys.UP, Keys.DOWN, Keys.ENTER),
-                 alignment: int = Alignment.CENTER):
+                 alignment: int = Alignment.CENTER,
+                 allow_sound: bool = False,
+                 selection_sound: str | None = 'selection.mp3'):
         """
         Инициализация компонента Меню
         
@@ -60,6 +62,7 @@ class Menu(Component):
             active_menu_color: Цвет активного пункта меню
             control_keys: Ключи для навигации
             alignment: Выравнивание пунктов меню
+            selection_sound: Звук при выборе
         """
         super().__init__(x, y, 0, 0, paddings)
         
@@ -73,10 +76,13 @@ class Menu(Component):
         self.reactive('active_menu_color', active_menu_color)
         self.reactive('control_keys', control_keys)
         self.reactive('alignment', alignment)
+        self.reactive('selection_sound', selection_sound)
         
         self._events.append((self.control_keys[0], self.move_up))
         self._events.append((self.control_keys[1], self.move_down))
         self._events.append((self.control_keys[2], self.execute_action))
+        
+        self.set_allow_sound(allow_sound)
         
     def flush_selection(self):
         """Сброс выбора"""
@@ -102,6 +108,7 @@ class Menu(Component):
         
         if self.items and key in self.keys_to_item_indexes:
             self.active_index = self.keys_to_item_indexes[key]
+            self.play_sound(self.selection_sound)
             self.execute_action()
         
     def move_up(self):
@@ -113,6 +120,8 @@ class Menu(Component):
             while isinstance(self.items[self.active_index], SeparatorItem):
                 self.active_index = (self.active_index - 1) % len(self.items)
             
+            self.play_sound(self.selection_sound)
+            
     def move_down(self):
         if not self.active:
             return
@@ -121,6 +130,8 @@ class Menu(Component):
             self.active_index = (self.active_index + 1) % len(self.items)
             while isinstance(self.items[self.active_index], SeparatorItem):
                 self.active_index = (self.active_index + 1) % len(self.items)
+            
+            self.play_sound(self.selection_sound)
             
     def add_item(self, text: tuple[str, str] | SeparatorItem, key: int, action: Callable[[], None]):
         """

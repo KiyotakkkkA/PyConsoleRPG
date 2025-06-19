@@ -138,7 +138,7 @@ class WinConsole:
         return csbi.dwSize.X, csbi.dwSize.Y
         
     def clear_screen(self):
-        """Очистка экрана с использованием WinAPI вместо ANSI-последовательностей"""
+        """Очистка экрана с использованием WinAPI"""
         width, height = self.get_console_size()
         chars_written = wintypes.DWORD(0)
         kernel32.FillConsoleOutputCharacterW(self.handle, ' ', width * height, 

@@ -76,6 +76,10 @@ class Table(Component):
     def set_selected_row(self, row: int):
         self.current_selected_row = max(0, min(row, len(self.rows) - 1))
         
+    def get_selected_row_data(self):
+        if not self.active: return None
+        return self.rows[self.current_selected_row]
+        
     def process_action(self):
         if not self.active: return
         if self.current_selected_row in self.actions:

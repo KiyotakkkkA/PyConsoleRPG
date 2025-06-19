@@ -1,19 +1,23 @@
-from .Screen import Screen
-from typing import Dict, Optional, List
+from ..Screen import Screen
+from .AudioManager import AudioManager
+from typing import Dict, Optional, List, Any
 from src.services.events import KeyListener
+from src.config.Config import Config
 
 class ScreenManager:
     """
     Класс, представляющий менеджер экранов
     """
-    _screens: Dict[str, 'Screen'] = {}
+    _audio_manager = AudioManager.get_instance()
+    
+    _screens: Dict[str, Dict[str, Any]] = {}
     _current_screen: Optional[str] = None
     _current_screen_instance: Optional['Screen'] = None
     _screen_history: List[str] = []  # История экранов для возврата назад
     _active_instances: Dict[str, 'Screen'] = {}  # Словарь активных экземпляров экранов
 
     @classmethod
-    def add_screen(cls, name: str, screen: 'Screen'):
+    def add_screen(cls, name: str, screens_dict: Dict[str, Any]):
         """
         Добавляет экран
         
@@ -21,17 +25,31 @@ class ScreenManager:
             name: Имя экрана
             screen: Экран
         """
-        cls._screens[name] = screen
+        cls._screens[name] = {
+            "screen": screens_dict["screen"],
+            "bg_music": cls.path_to_bg_music(name, screens_dict["bg_music"])}
         
     @classmethod
-    def add_screens(cls, screens: Dict[str, 'Screen']):
+    def path_to_bg_music(cls, name: str, music_file: str):
+        """
+        Устанавливает музыку для экрана
+        
+        Args:
+            name: Имя экрана
+            music_file: Путь к файлу музыки
+        """
+        return f"{Config.BG_MUSIC_DIR}/{music_file}" if music_file else None
+        
+    @classmethod
+    def add_screens(cls, screens: Dict[str, Dict[str, Any]]):
         """
         Добавляет несколько экранов
         
         Args:
             screens: Словарь экранов
         """
-        cls._screens.update(screens)
+        for name, screen in screens.items():
+            cls.add_screen(name, screen)
         
     @classmethod
     def remove_screen(cls, name: str):
@@ -72,10 +90,15 @@ class ScreenManager:
         if name in cls._active_instances:
             cls._current_screen_instance = cls._active_instances[name]
         else:
-            cls._current_screen_instance = cls._screens[name]()
+            cls._current_screen_instance = cls._screens[name]["screen"]()
             cls._active_instances[name] = cls._current_screen_instance
-        
+                   
         KeyListener().register_screen(cls._current_screen_instance)
+        
+        if cls._screens[name]["bg_music"]:
+            cls._audio_manager.play_music(cls._screens[name]["bg_music"])
+        else:
+            cls._audio_manager.stop_music()
         
         cls._current_screen_instance.before_mount()
         cls.draw()

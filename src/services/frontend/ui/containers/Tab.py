@@ -35,7 +35,9 @@ class Tab(Component):
                  active_tab_color: str = Color.WHITE,
                  disabled_tab_color: str = Color.BRIGHT_BLACK,
                  control_keys: Tuple[int, int] = (Keys.LEFT, Keys.RIGHT),
-                 border_color: str = Color.RESET):
+                 border_color: str = Color.RESET,
+                 allow_sound: bool = False,
+                 selection_sound: str | None = 'selection.mp3'):
         """
         Инициализация компонента Таб
         
@@ -50,6 +52,8 @@ class Tab(Component):
             disabled_tab_color: Цвет выключенного таба
             control_keys: Ключи для навигации
             border_color: Цвет рамки
+            allow_sound: Разрешить звук
+            selection_sound: Звук при выборе
         """
         super().__init__(x, y, width, height, paddings)
         
@@ -65,6 +69,9 @@ class Tab(Component):
         self.reactive('border_color', border_color)
         
         self.reactive('control_keys', control_keys)
+        self.reactive('selection_sound', selection_sound)
+        
+        self.set_allow_sound(allow_sound)
         
         if self.control_keys[0]:
             self._events.append((self.control_keys[0], self.move_left))
@@ -82,16 +89,19 @@ class Tab(Component):
     def move_left(self):
         if self.active_index in self.active_tabs:
             self.active_index = self.active_tabs[self.active_index]['prev']
+            self.play_sound(self.selection_sound)
         
     def move_right(self):
         if self.active_index in self.active_tabs:
             self.active_index = self.active_tabs[self.active_index]['next']
+            self.play_sound(self.selection_sound)
         
     def move_with_key(self, key: int):
         if key in self.keys_to_tab_indexes:
             index = self.keys_to_tab_indexes[key]
             if self.active_tabs[index]['active']:
                 self.active_index = index
+                self.play_sound(self.selection_sound)
         
     def calculate(self):
         self._calculate_self_size()

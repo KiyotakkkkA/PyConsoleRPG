@@ -2,6 +2,7 @@ from src.entities.interfaces import Computable
 from typing import List, Any, Dict, Set, Callable, Tuple
 from src.services.events.KeyListener import KeyListener, Keys
 from src.services.storage.State import State
+from src.config.Config import Config
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -11,6 +12,8 @@ class Component(Computable):
     """
     Класс, представляющий компонент, наследуемый от Computable
     """
+    
+    _base_sounds_dir = Config.SOUNDS_DIR
     
     def __init__(self, x: int, y: int, width: int, height: int, paddings: tuple = (1, 1, 1, 1)):
         """
@@ -33,6 +36,8 @@ class Component(Computable):
         
         super().__init__()
         
+        self.reactive('allow_sound', False)
+        
         self.reactive('width', width)
         self.reactive('height', height)
         self.reactive('paddings', paddings)
@@ -52,6 +57,27 @@ class Component(Computable):
         self.computed('inner_width', lambda: self.width - self.paddings[2] - self.paddings[3], ['width', 'paddings'])
         self.computed('inner_height', lambda: self.height - self.paddings[0] - self.paddings[1], ['height', 'paddings'])
         
+    def set_allow_sound(self, allow_sound: bool):
+        """
+        Устанавливает возможность воспроизведения звука
+        
+        Args:
+            allow_sound: Флаг, разрешающий воспроизведение звука
+        """
+        self.allow_sound = allow_sound
+        
+    def play_sound(self, sound: str = None):
+        """
+        Проигрывает звук
+        
+        Args:
+            sound: Имя файла звука
+        """
+        from src.services.frontend.core.managers.AudioManager import AudioManager
+        
+        if self.allow_sound and sound:
+            AudioManager.get_instance().play_sound(f"{self._base_sounds_dir}/{sound}")
+    
     def set_active(self, active: bool):
         """
         Устанавливает активность компонента
