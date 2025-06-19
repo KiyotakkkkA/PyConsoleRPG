@@ -46,6 +46,11 @@ class Screen(EventListener):
         KeyListener().register_screen(self)
         
     def init(self):
+        """Выполняется 1 раз при создании экрана"""
+        pass
+    
+    def before_mount(self):
+        """Выполняется перед включением экрана"""
         pass
     
     def on_event(self, event_name: str, callback: Callable):
@@ -79,6 +84,7 @@ class Screen(EventListener):
             self.performance_checker = PerformanceChecker(0, 0, 30, 5)
 
     def update(self):
+        """Выполняется каждую итерацию цикла игры"""
         pass
     
     def quit(self):

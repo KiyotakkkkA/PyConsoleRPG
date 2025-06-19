@@ -63,6 +63,7 @@ class DialogWindow(Panel):
         self.text = Text(self.x + 2, self.y + 1, self.text, self.text_color, Color.RESET)
         
         self.buttons = self._types[self.ctype]
+        
         self.set_children(self.buttons)
         
         self.add_child(self.text)

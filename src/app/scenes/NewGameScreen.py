@@ -5,6 +5,7 @@ from src.services.frontend.ui.input import Input
 from src.services.events import Keys
 from src.services.output import Color
 from src.services.utils import ToArtConverter
+import os
 
 class NewGameScreen(Screen):
     def __init__(self):
@@ -28,6 +29,17 @@ class NewGameScreen(Screen):
         self.bind_key(Keys.ESCAPE, self.ask_to_return)
         self.bind_key(Keys.UP, self.move_up)
         self.bind_key(Keys.DOWN, self.move_down)
+        
+    def flush_fields(self):
+        self.name_input.flush()
+        
+    def before_mount(self):
+        
+        self.new_player_data = {
+            'name': None
+        }
+        
+        self.flush_fields()
         
     def move_up(self):
         if self.name_input.active: return
@@ -67,16 +79,17 @@ class NewGameScreen(Screen):
                                           ctype="YES_NO",
                                           text_color=Color.BRIGHT_YELLOW)
     
-        self.error_window = DialogWindow(x=self.get_w() // 2 - 20,
+        error_window_width = 20
+        self.error_window = DialogWindow(x=self.get_w() // 2 - error_window_width // 2,
                                           y=self.get_h() // 2 - 25,
-                                          width=20,
+                                          width=error_window_width,
                                           height=7,
                                           text="",
                                           ctype="OK",
                                           text_color=Color.BRIGHT_RED)
 
         panel_w = 70
-        panel_h = 7
+        panel_h = 8
         self.menu_panel = Panel(x=(self.get_w() - panel_w) // 2,
                                 y=(self.get_h() - panel_h) // 2 - 10,
                                 width=panel_w,
@@ -130,12 +143,28 @@ class NewGameScreen(Screen):
         
         self.on_event("enter_name", self.enter_name_event)
         
-    def validate_data(self):
-        if not self.new_player_data['name']:
+    def validate_data_name(self, name: str):
+        from src.Game import Game
+        
+        if not name:
             return {
                 'status': False,
                 'message': 'Введите имя персонажа'
             }
+        if os.path.exists(f"{Game.SAVES_DIR}/{name}"):
+            return {
+                'status': False,
+                'message': 'Сохранение с таким именем уже существует'
+            }
+        return {
+            'status': True,
+            'message': 'Данные валидны'
+        }
+        
+    def validate_data(self):
+        validation = self.validate_data_name(self.new_player_data['name'])
+        if not validation['status']:
+            return validation
         return {
             'status': True,
             'message': 'Данные валидны'
@@ -154,6 +183,7 @@ class NewGameScreen(Screen):
             self.new_game_button.set_selected(False)
             return
         
+        self.emit_event("new_game_was_created", {'save_name': self.new_player_data['name']})
         Game.new_game(self.new_player_data)
     
     def enter_name_event(self, data):

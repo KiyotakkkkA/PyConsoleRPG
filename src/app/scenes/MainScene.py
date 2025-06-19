@@ -3,7 +3,7 @@ from src.services.frontend.ui.containers import Panel
 from src.services.frontend.ui.general import Text, Menu
 from src.services.output import Color
 from src.services.events import Keys
-
+import json
 
 from src.services.utils import ToArtConverter
 
@@ -21,6 +21,13 @@ class MainScene(Screen):
     @staticmethod
     def continue_game():
         from src.Game import Game
+        
+        with open(f"{Game.SAVES_DIR}/global.json", "r") as f:
+            data = json.load(f)
+        
+        save_name = data['last_character']
+        Game.CURRENT_LOADING_PLAYER = save_name
+        
         if Game.load():
             ScreenManager.navigate_to_screen("game")
         

@@ -74,6 +74,8 @@ class LoadGameScreen(Screen):
         _data = {}
         
         for save in os.listdir(Game.SAVES_DIR):
+            if not os.path.isdir(f"{Game.SAVES_DIR}/{save}"): continue
+            
             for file in os.listdir(f"{Game.SAVES_DIR}/{save}"):
                 if file == 'meta.json':
                     with open(f"{Game.SAVES_DIR}/{save}/meta.json", 'r', encoding='utf-8') as f:
@@ -101,8 +103,9 @@ class LoadGameScreen(Screen):
     def load_game(self, save_name: str):
         from src.Game import Game
         Game.CURRENT_LOADING_PLAYER = save_name
-        Game.load()
-        Game.screen_manager.navigate_to_screen("game")
+        if Game.load():
+            self.emit_event("game_was_loaded", {'save_name': save_name})
+            Game.screen_manager.navigate_to_screen("game")
     
     def ask_to_return(self):
         if self.is_in_dialog: return

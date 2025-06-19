@@ -5,9 +5,31 @@ from src.services.frontend.ui.input import Selector
 from src.services.frontend.core.Format import Alignment
 from src.services.events import Keys
 from src.services.output import Color
+from src.services.events import EventListener
 import time
+import json
 
 class GameScene(Screen):
+    
+    _event_listener = EventListener()
+    
+    def set_global_meta_uphead(data):
+        from src.Game import Game
+        
+        _dir = Game.SAVES_DIR
+        with open(f"{_dir}/global.json", "w") as f:
+            try:
+                current_meta = json.load(f)
+            except:
+                current_meta = {}
+            
+            current_meta['last_character'] = data['save_name']
+            
+            json.dump(current_meta, f)
+            
+    _event_listener.on_event("game_was_loaded", set_global_meta_uphead)
+    _event_listener.on_event("new_game_was_created", set_global_meta_uphead)
+    
     def __init__(self):
         super().__init__()
         self.performance_vision = True
@@ -148,35 +170,49 @@ class GameScene(Screen):
         
         self.relax_time = Text(self.player_panel.x + 2, self.player_panel.height - 1, "Отдых {}", Color.BRIGHT_BLACK, Color.RESET)
         
-        self.player_level_addition = Text(self.player_panel.x + 2, self.player_panel.y + 2, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
-        self.player_level_label = Text(self.player_level_addition.x + self.player_level_addition.width + 1, self.player_panel.y, "Уровень:", Color.WHITE, Color.RESET)
-        self.player_level = Text(self.player_level_label.x + self.player_level_label.width + 1, self.player_panel.y, "", Color.BRIGHT_YELLOW, Color.RESET)
+        player_name_y = self.player_panel.y + 1
+        self.player_name_addition = Text(self.player_panel.x + 2, player_name_y, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
+        self.player_name_label = Text(self.player_name_addition.x + self.player_name_addition.width + 1, player_name_y, "Имя:", Color.WHITE, Color.RESET)
+        self.player_name = Text(self.player_name_label.x + self.player_name_label.width + 1, player_name_y, "", Color.BRIGHT_YELLOW, Color.RESET)
         
-        self.player_exp_to_next_level_addition = Text(self.player_panel.x + 2, self.player_panel.y + 3, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
-        self.player_exp_to_next_level_label = Text(self.player_exp_to_next_level_addition.x + self.player_exp_to_next_level_addition.width + 1, self.player_panel.y, "До повышения:", Color.WHITE, Color.RESET)
-        self.player_current_exp = Text(self.player_exp_to_next_level_label.x + self.player_exp_to_next_level_label.width + 1, self.player_panel.y, "", Color.BRIGHT_YELLOW, Color.RESET)
-        self.player_exp_to_next_level = Text(self.player_current_exp.x + self.player_current_exp.width + 1, self.player_panel.y, "", Color.BRIGHT_YELLOW, Color.RESET)
+        player_level_y = player_name_y + 1
+        self.player_level_addition = Text(self.player_panel.x + 2, player_level_y, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
+        self.player_level_label = Text(self.player_level_addition.x + self.player_level_addition.width + 1, player_level_y, "Уровень:", Color.WHITE, Color.RESET)
+        self.player_level = Text(self.player_level_label.x + self.player_level_label.width + 1, player_level_y, "", Color.BRIGHT_YELLOW, Color.RESET)
         
-        self.player_health_addition = Text(self.player_panel.x + 2, self.player_panel.y + 4, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
-        self.player_health_label = Text(self.player_health_addition.x + self.player_health_addition.width + 1, self.player_panel.y, "Здоровье:", Color.WHITE, Color.RESET)
-        self.player_health_max = Text(self.player_health_label.x + self.player_health_label.width + 1, self.player_panel.y, "", Color.BRIGHT_RED, Color.RESET)
-        self.player_health = Text(self.player_health_max.x + self.player_health_max.width + 1, self.player_panel.y, "", Color.BRIGHT_RED, Color.RESET)
+        player_exp_to_next_level_y = player_level_y + 1
+        self.player_exp_to_next_level_addition = Text(self.player_panel.x + 2, player_exp_to_next_level_y, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
+        self.player_exp_to_next_level_label = Text(self.player_exp_to_next_level_addition.x + self.player_exp_to_next_level_addition.width + 1, player_exp_to_next_level_y, "До повышения:", Color.WHITE, Color.RESET)
+        self.player_current_exp = Text(self.player_exp_to_next_level_label.x + self.player_exp_to_next_level_label.width + 1, player_exp_to_next_level_y, "", Color.BRIGHT_YELLOW, Color.RESET)
+        self.player_exp_to_next_level = Text(self.player_current_exp.x + self.player_current_exp.width + 1, player_exp_to_next_level_y, "", Color.BRIGHT_YELLOW, Color.RESET)
         
-        self.player_energy_addition = Text(self.player_panel.x + 2, self.player_panel.y + 6, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
-        self.player_energy_label = Text(self.player_energy_addition.x + self.player_energy_addition.width + 1, self.player_panel.y, "Энергия:", Color.WHITE, Color.RESET)
-        self.player_energy_max = Text(self.player_energy_label.x + self.player_energy_label.width + 1, self.player_panel.y, "", Color.BRIGHT_GREEN, Color.RESET)
-        self.player_energy = Text(self.player_energy_max.x + self.player_energy_max.width + 1, self.player_panel.y, "", Color.BRIGHT_GREEN, Color.RESET)
+        player_health_y = player_exp_to_next_level_y + 1
+        self.player_health_addition = Text(self.player_panel.x + 2, player_health_y, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
+        self.player_health_label = Text(self.player_health_addition.x + self.player_health_addition.width + 1, player_health_y, "Здоровье:", Color.WHITE, Color.RESET)
+        self.player_health_max = Text(self.player_health_label.x + self.player_health_label.width + 1, player_health_y, "", Color.BRIGHT_RED, Color.RESET)
+        self.player_health = Text(self.player_health_max.x + self.player_health_max.width + 1, player_health_y, "", Color.BRIGHT_RED, Color.RESET)
         
-        self.player_astrum_addition = Text(self.player_panel.x + 2, self.player_panel.y + 8, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
-        self.player_astrum_label = Text(self.player_astrum_addition.x + self.player_astrum_addition.width + 1, self.player_panel.y, "Аструм:", Color.WHITE, Color.RESET)
-        self.player_astrum_max = Text(self.player_astrum_label.x + self.player_astrum_label.width + 1, self.player_panel.y, "", Color.BRIGHT_BLUE, Color.RESET)
-        self.player_astrum = Text(self.player_astrum_max.x + self.player_astrum_max.width + 1, self.player_panel.y, "", Color.BRIGHT_BLUE, Color.RESET)
+        player_energy_y = player_health_y + 1
+        self.player_energy_addition = Text(self.player_panel.x + 2, player_energy_y, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
+        self.player_energy_label = Text(self.player_energy_addition.x + self.player_energy_addition.width + 1, player_energy_y, "Энергия:", Color.WHITE, Color.RESET)
+        self.player_energy_max = Text(self.player_energy_label.x + self.player_energy_label.width + 1, player_energy_y, "", Color.BRIGHT_GREEN, Color.RESET)
+        self.player_energy = Text(self.player_energy_max.x + self.player_energy_max.width + 1, player_energy_y, "", Color.BRIGHT_GREEN, Color.RESET)
+        
+        player_astrum_y = player_energy_y + 1
+        self.player_astrum_addition = Text(self.player_panel.x + 2, player_astrum_y, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
+        self.player_astrum_label = Text(self.player_astrum_addition.x + self.player_astrum_addition.width + 1, player_astrum_y, "Аструм:", Color.WHITE, Color.RESET)
+        self.player_astrum_max = Text(self.player_astrum_label.x + self.player_astrum_label.width + 1, player_astrum_y, "", Color.BRIGHT_BLUE, Color.RESET)
+        self.player_astrum = Text(self.player_astrum_max.x + self.player_astrum_max.width + 1, player_astrum_y, "", Color.BRIGHT_BLUE, Color.RESET)
         
         self.control_panel.add_child(self.action_panel)
         self.action_panel.add_child(self.control_activities)
         self.control_panel.add_child(self.player_panel)
         
         self.player_panel.add_child(self.relax_time)
+        
+        self.player_panel.add_child(self.player_name_addition)
+        self.player_panel.add_child(self.player_name_label)
+        self.player_panel.add_child(self.player_name)
         
         self.player_panel.add_child(self.player_level_addition)
         self.player_panel.add_child(self.player_level_label)
@@ -355,7 +391,9 @@ class GameScene(Screen):
         self.player_panel.set_y(self.action_panel.y + self.action_panel.height)
         self.player_panel.set_height(self.control_panel.height - self.action_panel.height - 6)
         
-        self.relax_time.set_y(self.player_panel.y + 1)
+        relax_time_y = self.player_panel.y + 1
+        
+        self.relax_time.set_y(relax_time_y)
         if Game.game_state.state['current_relax_time'] > 0:
             self.relax_time.set_fg_color(Color.BRIGHT_RED)
             self.relax_time.set_text(f"| ПЕРЕМЕЩЕНИЕ - {float(Game.game_state.state['current_relax_time']):.2f} сек. |")
@@ -363,11 +401,17 @@ class GameScene(Screen):
             self.relax_time.set_fg_color(Color.BRIGHT_GREEN)
             self.relax_time.set_text("| ГОТОВ К ПЕРЕМЕЩЕНИЮ |")
         
-        level_y = self.player_panel.y + 3
+        name_y = relax_time_y + 2
+        level_y = name_y + 2
         exp_y = level_y + 1
         health_y = exp_y + 2
         energy_y = health_y + 1
         astrum_y = energy_y + 1
+        
+        self.player_name_addition.set_y(name_y)
+        self.player_name_label.set_y(name_y)
+        self.player_name.set_y(name_y)
+        self.player_name.set_text(Game.player.name)
         
         self.player_level_addition.set_y(level_y)
         self.player_level_label.set_y(level_y)

@@ -181,6 +181,12 @@ class Input(Component):
             str: Значение ввода
         """
         return self.input_value
+    
+    def flush(self):
+        """
+        Очистка текста ввода
+        """
+        self._set_text("")
         
     def _set_text(self, text: str):
         self.input_value = text
@@ -229,7 +235,7 @@ class Input(Component):
             self.set_active(False)
             self._set_text(self.input_text.text[:-1])
             
-            EventSystem().emit(self.enter_data_event_name, {'value': self.input_text.text[:-1]})
+            EventSystem().emit(self.enter_data_event_name, {'value': self.input_text.text})
             
     def _on_enter_solo_key(self):
         if self.active:

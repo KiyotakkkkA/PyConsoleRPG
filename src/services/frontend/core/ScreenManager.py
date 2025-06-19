@@ -77,6 +77,7 @@ class ScreenManager:
         
         KeyListener().register_screen(cls._current_screen_instance)
         
+        cls._current_screen_instance.before_mount()
         cls.draw()
         
     @classmethod
