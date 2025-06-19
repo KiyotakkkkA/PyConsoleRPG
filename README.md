@@ -12,7 +12,7 @@
 1. Клонируйте репозиторий или загрузите архив проекта
 
 ```bash
-$ git clone https://github.com/your-name/PyConsoleRPG.git
+$ git clone https://github.com/KiyotakkkkA/PyConsoleRPG.git
 $ cd PyConsoleRPG
 ```
 
