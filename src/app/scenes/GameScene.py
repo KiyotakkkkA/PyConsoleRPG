@@ -13,18 +13,20 @@ class GameScene(Screen):
     
     _event_listener = EventListener()
     
-    def set_global_meta_uphead(data):
+    def set_global_meta_uphead(data: dict):
         from src.Game import Game
-        
+        import json
+    
         _dir = Game.SAVES_DIR
-        with open(f"{_dir}/global.json", "w") as f:
-            try:
+        try:
+            with open(f"{_dir}/global.json", "r") as f:
                 current_meta = json.load(f)
-            except:
-                current_meta = {}
-            
-            current_meta['last_character'] = data['save_name']
-            
+        except (FileNotFoundError, json.JSONDecodeError):
+            current_meta = {}
+
+        current_meta['last_character'] = data['save_name']
+    
+        with open(f"{_dir}/global.json", "w") as f:
             json.dump(current_meta, f)
             
     _event_listener.on_event("game_was_loaded", set_global_meta_uphead)

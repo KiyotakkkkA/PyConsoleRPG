@@ -1,7 +1,7 @@
 from src.services.backend.registers import RegistryLocation, RegistryRegion, RegistryItems
 from src.entities.models import Player
 from src.entities.interfaces import Serializable
-from src.app.scenes import MainScene, GameScene, SettingsScene, NewGameScreen, LoadGameScreen
+from src.app.scenes import MainScene, GameScene, SettingsScene, NewGameScene, LoadGameScene, AudioSettingScene
 from src.services.frontend.core import ScreenManager
 from src.config.Config import Config
 import time
@@ -76,11 +76,15 @@ class Game:
                  "bg_music": ""
                  },
         "new_game": {
-                 "screen": NewGameScreen,
+                 "screen": NewGameScene,
                  "bg_music": ""
                  },
         "load_game": {
-                 "screen": LoadGameScreen,
+                 "screen": LoadGameScene,
+                 "bg_music": ""
+                 },
+        "audio_settings": {
+                 "screen": AudioSettingScene,
                  "bg_music": ""
                  }
     }
@@ -213,10 +217,27 @@ class Game:
         cls.screen_manager.add_screens(cls.screens)
         if cls.DEBUG:
             print("[INFO] Экраны зарегистрированы.")
+            
+    @classmethod
+    def _set_global_settings(cls):
+        from src.services.frontend.core import AudioManager
+        audio_manager = AudioManager.get_instance()
+        if cls.DEBUG:
+            print("[INFO] Установка глобальных настроек...")
+        try:
+            with open(f"{cls.SAVES_DIR}/global.json", "r") as f:
+                global_settings = json.load(f)
+                audio_manager.apply_music_volume_multiplier(global_settings['current_music_multiplier'])
+        except (FileNotFoundError, json.JSONDecodeError):
+            audio_manager.apply_music_volume_multiplier(0.1)
+        if cls.DEBUG:
+            print("[INFO] Глобальные настройки установлены.")
+        
     
     @classmethod
     def init(cls):
         cls._register_entities()
         cls._register_screens()
+        cls._set_global_settings()
         
         cls.screen_manager.navigate_to_screen("main")

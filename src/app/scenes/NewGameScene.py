@@ -7,7 +7,7 @@ from src.services.output import Color
 from src.services.utils import ToArtConverter
 import os
 
-class NewGameScreen(Screen):
+class NewGameScene(Screen):
     def __init__(self):
         super().__init__()
         self.performance_vision = True
@@ -42,14 +42,14 @@ class NewGameScreen(Screen):
         self.flush_fields()
         
     def move_up(self):
-        if self.name_input.active: return
+        if self.components_order[self.current_component_index].active: return
         
         self.components_order[self.current_component_index].set_selected(False)
         self.current_component_index = (self.current_component_index - 1) % len(self.components_order)
         self.components_order[self.current_component_index].set_selected(True)
         
     def move_down(self):
-        if self.name_input.active: return
+        if self.components_order[self.current_component_index].active: return
         
         self.components_order[self.current_component_index].set_selected(False)
         self.current_component_index = (self.current_component_index + 1) % len(self.components_order)
@@ -134,7 +134,7 @@ class NewGameScreen(Screen):
         self.help_panel_w = self.get_w() - 2
         self.help_panel = Panel(1, self.get_h() - self.help_panel_height, self.help_panel_w, self.help_panel_height, "", " ", Alignment.LEFT, border_color=Color.BRIGHT_BLACK, paddings=(1, 0, 0, 0))
         
-        text = Text(self.help_panel.x + 1, self.help_panel.y, "↑↓: Навигация, Enter: Подтвердить, Esc: Назад, F1: Монитор производительности", Color.BRIGHT_BLACK, Color.RESET)
+        text = Text(self.help_panel.x + 1, self.help_panel.y, "↑↓: Навигация, Enter: Выбрать, Esc: Назад, F1: Монитор производительности", Color.BRIGHT_BLACK, Color.RESET)
         self.help_panel.add_child(text)
         
         self.add_child(self.name_input)

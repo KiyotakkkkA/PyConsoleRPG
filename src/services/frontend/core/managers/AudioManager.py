@@ -18,16 +18,23 @@ class AudioManager:
             pygame.mixer.init()
             self.initialized = True
             self.current_music = None
-            self.music_volume = 0.1
-            self.sound_volume = 0.1
-            self.current_sound_multiplier = 1.0
+            self.music_volume = 1
+            self.sound_volume = 1
+            self.current_sound_multiplier = 0.1
+            self.current_music_multiplier = 0.1
             self.sounds_cache = {}
             print("Аудио система инициализирована")
         except Exception as e:
             self.initialized = False
             print(f"Ошибка инициализации аудио: {e}")
+            
+    def get_current_music_multiplier_as_int(self):
+        return int(self.current_music_multiplier * 10)
     
-    def play_music(self, music_file: str, loop: bool = True, volume_multiplier: float = 1.0):
+    def get_current_sound_multiplier_as_int(self):
+        return int(self.current_sound_multiplier * 10)
+    
+    def play_music(self, music_file: str, loop: bool = True):
         """
         Воспроизводит фоновую музыку.
         
@@ -42,7 +49,7 @@ class AudioManager:
         if music_file == self.current_music:
             if not pygame.mixer.music.get_busy():
                 pygame.mixer.music.play(-1 if loop else 0)
-                actual_volume = self.music_volume * volume_multiplier
+                actual_volume = self.music_volume * self.current_music_multiplier
                 pygame.mixer.music.set_volume(actual_volume)
             return
             
@@ -51,7 +58,7 @@ class AudioManager:
                 pygame.mixer.music.stop()
                 
             pygame.mixer.music.load(music_file)
-            actual_volume = self.music_volume * volume_multiplier
+            actual_volume = self.music_volume * self.current_music_multiplier
             pygame.mixer.music.set_volume(actual_volume)
             pygame.mixer.music.play(-1 if loop else 0)
             self.current_music = music_file
@@ -69,7 +76,7 @@ class AudioManager:
             pygame.mixer.music.stop()
         self.current_music = None
     
-    def play_sound(self, sound_file: str, volume_multiplier: float = None):
+    def play_sound(self, sound_file: str):
         """
         Воспроизводит звуковой эффект.
         
@@ -81,7 +88,7 @@ class AudioManager:
             return
             
         try:
-            actual_multiplier = volume_multiplier if volume_multiplier is not None else self.current_sound_multiplier
+            actual_multiplier = self.current_sound_multiplier
             
             if sound_file in self.sounds_cache:
                 sound = self.sounds_cache[sound_file]
@@ -135,7 +142,8 @@ class AudioManager:
         if not self.initialized:
             return
             
-        actual_volume = self.music_volume * multiplier
+        self.current_music_multiplier = max(0.0, min(1.0, multiplier))
+        actual_volume = self.music_volume * self.current_music_multiplier
         pygame.mixer.music.set_volume(actual_volume)
         
     def apply_sound_volume_multiplier(self, multiplier: float):

@@ -46,9 +46,9 @@ class SettingsScene(Screen):
         self.add_child(self.menu)
         
         self.menu.add_items([
-            (("Графика", Color.WHITE), Keys.Q, lambda: print("Графика")),
-            (("Аудио", Color.WHITE), Keys.Q, lambda: print("Аудио")),
-            (("Язык", Color.WHITE), Keys.Q, lambda: print("Язык")),
+            (("Графика", Color.WHITE), Keys.G, self.to_setting_graphic),
+            (("Звук", Color.WHITE), Keys.A, self.to_setting_audio),
+            (("Язык", Color.WHITE), Keys.L, self.to_setting_language),
         ])
         
         self.menu.set_selection(0)
@@ -62,6 +62,18 @@ class SettingsScene(Screen):
         self.help_panel.add_child(text)
         
         self.add_child(self.help_panel)
+        
+    def to_setting_audio(self):
+        from src.Game import Game
+        Game.screen_manager.navigate_to_screen("audio_settings")
+        
+    def to_setting_graphic(self):
+        from src.Game import Game
+        Game.screen_manager.navigate_to_screen("graphic_settings")
+        
+    def to_setting_language(self):
+        from src.Game import Game
+        Game.screen_manager.navigate_to_screen("language_settings")
     
     def ask_to_return(self):
         if self.is_in_dialog: return

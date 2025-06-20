@@ -1,4 +1,4 @@
-from src.services.frontend.core import Screen, ScreenManager
+from src.services.frontend.core import Screen, ScreenManager, Alignment
 from src.services.frontend.ui.containers import Panel
 from src.services.frontend.ui.general import Text, Menu
 from src.services.output import Color
@@ -83,5 +83,14 @@ class MainScene(Screen):
         
         self.menu.set_selection(0)
         self.menu.set_active(True)
+        
+        self.help_panel_height = 3
+        self.help_panel_w = self.get_w() - 2
+        self.help_panel = Panel(1, self.get_h() - self.help_panel_height, self.help_panel_w, self.help_panel_height, "", " ", Alignment.LEFT, border_color=Color.BRIGHT_BLACK, paddings=(1, 0, 0, 0))
+        
+        text = Text(self.help_panel.x + 1, self.help_panel.y, "↑↓: Навигация, Enter: Выбрать, F1: Монитор производительности", Color.BRIGHT_BLACK, Color.RESET)
+        self.help_panel.add_child(text)
+        
+        self.add_child(self.help_panel)
         
         

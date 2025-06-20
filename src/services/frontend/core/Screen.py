@@ -177,11 +177,9 @@ class Screen(EventListener):
     
     def draw_text(self, x: int, y: int, text: str, fg_color: str = Color.WHITE, bg_color: str = Color.RESET) -> None:
         """Отрисовка текста в back_buffer"""
-        # Проверяем, содержит ли текст специальные иконки
         if not text:
             return
         
-        # Используем простой вывод, символ за символом, каждый символ в своей ячейке
         cursor_pos = 0
         for char in text:
             if x + cursor_pos < self.width:

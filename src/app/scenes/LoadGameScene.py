@@ -8,7 +8,7 @@ import os
 import json
 import time
 
-class LoadGameScreen(Screen):
+class LoadGameScene(Screen):
     def __init__(self):
         super().__init__()
         self.performance_vision = True

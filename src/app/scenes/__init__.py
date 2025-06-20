@@ -1,13 +1,15 @@
 from .MainScene import MainScene
 from .GameScene import GameScene
 from .SettingsScene import SettingsScene
-from .NewGameScreen import NewGameScreen
-from .LoadGameScreen import LoadGameScreen
+from .NewGameScene import NewGameScene
+from .LoadGameScene import LoadGameScene
+from .settings.AudioSettingScene import AudioSettingScene
 
 __all__ = [
     "MainScene",
     "GameScene",
     "SettingsScene",
-    "NewGameScreen",
-    "LoadGameScreen"
+    "NewGameScene",
+    "LoadGameScene",
+    "AudioSettingScene"
 ]

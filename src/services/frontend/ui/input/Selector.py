@@ -123,6 +123,18 @@ class Selector(Component):
         if self.is_type_minus_current_plus():
             return self.current_value
         return self.options[self.current_index]
+    
+    def set_value(self, value: int):
+        """
+        Установка численного значения [работает только в режиме minus-current-plus]
+        
+        Args:
+            value: Значение
+        """
+        if not self.is_type_minus_current_plus():
+            return
+        
+        self.current_value = min(max(value, self.min_value), self.max_value)
         
     def _on_enter(self):
         if self.selected and not self.active:
