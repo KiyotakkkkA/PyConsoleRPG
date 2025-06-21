@@ -183,7 +183,9 @@ class Table(Component):
             screen.draw_text(self.x, row_y + 1, Symbols.BORDERS.BOTTOM_LEFT + Symbols.BORDERS.BOTTOM * (self.width - 1) + Symbols.BORDERS.BOTTOM_RIGHT, self.border_color, Color.RESET)
             row_y += 2
         
-        for i in range(self.start_row, self.end_row):
+        if not self.rows: return
+        
+        for i in range(self.start_row, self.end_row):            
             for j in range(len(self.rows[i])):
                 screen.draw_text(self.headers_data[j]['x'], row_y, Symbols.BORDERS.LEFT, self.border_color, Color.RESET)
                 

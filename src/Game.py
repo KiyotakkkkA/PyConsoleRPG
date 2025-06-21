@@ -1,8 +1,9 @@
 from src.services.backend.registers import RegistryLocation, RegistryRegion, RegistryItems
 from src.entities.models import Player
 from src.entities.interfaces import Serializable
-from src.app.scenes import MainScene, GameScene, SettingsScene, NewGameScene, LoadGameScene, AudioSettingScene
-from src.services.frontend.core import ScreenManager
+from src.app.scenes import MainScene, GameScene, SettingsScene, NewGameScene, LoadGameScene, AudioSettingScene, LangSettingScene
+from src.services.frontend.core import ScreenManager, AudioManager
+from src.services.backend.managers import GlobalMetadataManager, LocaleManager
 from src.config.Config import Config
 import time
 import json
@@ -48,6 +49,12 @@ class Game:
     GAME_WAS_LOADED_SUCCESSFULLY = False
     CURRENT_LOADING_PLAYER = None
     
+    # Менеджеры
+    screen_manager = ScreenManager().get_instance()
+    audio_manager = AudioManager().get_instance()
+    global_metadata_manager = GlobalMetadataManager().get_instance()
+    locale_manager = LocaleManager().get_instance()
+    
     # Игрок
     player = Player()
     
@@ -86,11 +93,12 @@ class Game:
         "audio_settings": {
                  "screen": AudioSettingScene,
                  "bg_music": ""
+                 },
+        "lang_settings": {
+                 "screen": LangSettingScene,
+                 "bg_music": ""
                  }
     }
-    
-    # Экраны
-    screen_manager = ScreenManager()
     
     # Текущий экран
     current_screen = None
@@ -219,17 +227,23 @@ class Game:
             print("[INFO] Экраны зарегистрированы.")
             
     @classmethod
+    def _set_audio_settings(cls):
+        if cls.DEBUG:
+            print("[INFO] Установка настроек аудио...")
+        cls.audio_manager.apply_music_volume_multiplier(cls.global_metadata_manager.get_value("current_music_multiplier", 0.1))
+        
+    @classmethod
+    def _set_lang_settings(cls):
+        if cls.DEBUG:
+            print("[INFO] Установка настроек языка...")
+        cls.locale_manager.set_locale(cls.global_metadata_manager.get_value("current_lang", "ru"))
+            
+    @classmethod
     def _set_global_settings(cls):
-        from src.services.frontend.core import AudioManager
-        audio_manager = AudioManager.get_instance()
         if cls.DEBUG:
             print("[INFO] Установка глобальных настроек...")
-        try:
-            with open(f"{cls.SAVES_DIR}/global.json", "r") as f:
-                global_settings = json.load(f)
-                audio_manager.apply_music_volume_multiplier(global_settings['current_music_multiplier'])
-        except (FileNotFoundError, json.JSONDecodeError):
-            audio_manager.apply_music_volume_multiplier(0.1)
+        cls._set_audio_settings()
+        cls._set_lang_settings()
         if cls.DEBUG:
             print("[INFO] Глобальные настройки установлены.")
         

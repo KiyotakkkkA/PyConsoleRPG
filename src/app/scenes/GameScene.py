@@ -6,28 +6,15 @@ from src.services.frontend.core.Format import Alignment
 from src.services.events import Keys
 from src.services.output import Color
 from src.services.events import EventListener
+from src.services.backend.managers import GlobalMetadataManager
 import time
-import json
 
 class GameScene(Screen):
     
     _event_listener = EventListener()
     
     def set_global_meta_uphead(data: dict):
-        from src.Game import Game
-        import json
-    
-        _dir = Game.SAVES_DIR
-        try:
-            with open(f"{_dir}/global.json", "r") as f:
-                current_meta = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            current_meta = {}
-
-        current_meta['last_character'] = data['save_name']
-    
-        with open(f"{_dir}/global.json", "w") as f:
-            json.dump(current_meta, f)
+        GlobalMetadataManager.get_instance().set_value('last_character', data['save_name'])
             
     _event_listener.on_event("game_was_loaded", set_global_meta_uphead)
     _event_listener.on_event("new_game_was_created", set_global_meta_uphead)
@@ -36,19 +23,16 @@ class GameScene(Screen):
         super().__init__()
         self.performance_vision = True
         
-        self.is_in_dialog = False
-        
         self.current_selector = None
         
         self.temp_items_activities = []
         
-        self.current_display = 'Характеристики'
+        self.current_display = 'chars'
         
         self.bind_key(Keys.F1, self.toggle_performance_monitor)
         self.bind_key(Keys.S, self.toggle_selector)
         self.bind_key(Keys.LEFT, self.to_control_panel)
         self.bind_key(Keys.RIGHT, self.to_main_panel)
-        self.bind_key(Keys.ESCAPE, self.ask_to_exit)
         
     def game_collect_resource(self, resource_id: str):
         """
@@ -101,8 +85,20 @@ class GameScene(Screen):
             if self.tab.get_selection_of_tab_by_id('player'):
                 self.display_selector.set_active(False)
                 self.main_panel.set_selected(True)
+                
                 self.current_selector = None
                 self.current_display = data['value']
+                
+                self.player_panels['data'][self.player_panels['current_visible']]['visible'] = False
+                for panel in self.player_panels['data'][self.player_panels['current_visible']]['panels']:
+                    panel.set_visible(False)
+                
+                self.player_panels['current_visible'] = data['value']
+                
+                self.player_panels['data'][self.player_panels['current_visible']]['visible'] = True
+                for panel in self.player_panels['data'][self.player_panels['current_visible']]['panels']:
+                    panel.set_visible(True)
+                
                 return
         
         if self.main_panel.selected:
@@ -502,7 +498,7 @@ class GameScene(Screen):
                                  label_active_color=Color.BG_BRIGHT_GREEN,
                                  value_color=Color.BRIGHT_YELLOW,
                                  selection_type="prev-current-next",
-                                 options=["Характеристики", "Способности"])
+                                 options=[("chars", "Характеристики"), ("abilities", "Способности")])
         self.display_selector.current_index = 0
         
         self.characteristics_panel = Panel(x=self.tab1.x + 1,
@@ -558,6 +554,31 @@ class GameScene(Screen):
         self.characteristics_panel.add_child(self.intelligence_characteristic_value)
         self.characteristics_panel.add_child(self.intelligence_description)
         
+        self.ability_panel = Panel(x=self.tab1.x + 1,
+                          y=self.tab1.y + 4,
+                          width=1,
+                          height=self.tab1.height - 8,
+                          title=" Способности ",
+                          filler=" ",
+                          title_alignment=Alignment.LEFT,
+                          border_color=Color.BRIGHT_BLACK,
+                          border_color_selected=Color.BRIGHT_BLACK,
+                          title_color=Color.YELLOW)
+        
+        self.player_panels = {
+            'data': {
+                "chars": {
+                    'panels': [self.characteristics_panel],
+                    'visible': True,
+                },
+                "abilities": {
+                    'panels': [self.ability_panel],
+                    'visible': False,
+                },
+            },
+            'current_visible': 'chars'
+        }
+        
     def set_tab_inventory(self):
         self.inventory_table = Table(self.tab3.x + 2, self.tab3.y + 4, self.tab3.width - 5, [
             "Название",
@@ -578,6 +599,8 @@ class GameScene(Screen):
         self.tab3.add_child(self.inventory_table)
     
     def init(self):
+        self.with_redirect_to_dialog_window_preset("Вернуться в главное меню?", (self.get_w() // 2 - 40 // 2, self.get_h() // 2 - 25), (40, 7), Color.BRIGHT_YELLOW)
+        
         self.set_control_panel()
         self.set_main_panel()
         self.set_help_panel()
@@ -725,30 +748,6 @@ class GameScene(Screen):
         self.constitution_characteristic_value.set_text(f"{Game.player.total_constitution}")
         self.endurance_characteristic_value.set_text(f"{Game.player.total_endurance}")
         self.intelligence_characteristic_value.set_text(f"{Game.player.total_intelligence}")
-        
-    def dialog_exit_game(self):
-        from src.Game import Game
-        
-        self.dialog_window.set_active(False)
-        self.unbind_child(self.dialog_window)
-        self.is_in_dialog = False
-        Game.screen_manager.navigate_to_screen('main')
-            
-    def dialog_close_dialog(self):
-        self.dialog_window.set_active(False)
-        self.unbind_child(self.dialog_window)
-        self.is_in_dialog = False
-        
-    def ask_to_exit(self):        
-        if self.is_in_dialog: return
-        
-        self.is_in_dialog = True
-        
-        self.add_child(self.dialog_window)
-        self.dialog_window.set_active(True)
-        
-        self.dialog_window.bind_yes(self.dialog_exit_game)
-        self.dialog_window.bind_no(self.dialog_close_dialog)
         
                 
     def update(self):

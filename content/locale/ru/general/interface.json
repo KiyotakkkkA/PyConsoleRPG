@@ -1,0 +1,56 @@
+{
+
+    "interface.dialog_window.option.ok": "Хорошо",
+    "interface.dialog_window.option.cancel": "Отмена",
+    "interface.dialog_window.option.yes": "Да",
+    "interface.dialog_window.option.no": "Нет",
+
+    "interface.dialog_window.return_back": "Вернуться назад",
+    "interface.dialog_window.return_to_main_menu": "Вернуться в главное меню",
+    "interface.dialog_window.are_you_ready_to_delete": "Вы уверены, что хотите удалить это сохранение?",
+    "interface.dialog_window.next_char_will_be_deleted": "Следующий персонаж будет удален",
+
+    "interface.info_window.lang_was_changed": "Язык был успешно изменен",
+    "interface.info_window.need_to_reload": "Пожалуйста, перезагрузите игру",
+
+    "interface.error_window.character_already_exists": "Персонаж с таким именем уже существует",
+    "interface.error_window.empty_name": "Введите имя персонажа",
+
+    "interface.bottom.navigation": "Навигация",
+    "interface.bottom.enter": "Выбрать",
+    "interface.bottom.load": "Загрузить",
+    "interface.bottom.admit": "Подтвердить",
+    "interface.bottom.back": "Назад",
+    "interface.bottom.active_panel_change": "Переключение активной панели",
+    "interface.bottom.active_tab_change": "Переключение вкладок",
+    "interface.bottom.delete_save": "Удалить сохранение",
+    "interface.bottom.performance_monitor": "Монитор производительности",
+
+    "interface.main_menu.title": "Обновление",
+    "interface.main_menu.continue_game": "Продолжить игру",
+    "interface.main_menu.new_game": "Новая игра",
+    "interface.main_menu.load_game": "Загрузка игры",
+    "interface.main_menu.settings": "Настройки",
+    "interface.main_menu.controls": "Управление",
+    "interface.main_menu.exit": "Выход",
+
+    "interface.settings.title": "Настройки",
+    "interface.settings.graphic": "Графика",
+    "interface.settings.audio": "Звук",
+    "interface.settings.language": "Язык",
+
+    "interface.settings.audio_settings.title": "Настройка звука",
+    "interface.settings.audio_settings.bg_music_volume_selector": "Громкость музыки на заднем фоне",
+
+    "interface.load_game.title": "Загрузка сохранения",
+    "interface.load_game.table.character": "Персонаж",
+    "interface.load_game.table.save_date": "Дата сохранения",
+    "interface.load_game.table.level": "Уровень",
+
+    "interface.new_game.title": "Новая игра",
+    "interface.new_game.char_name_input": "Введите имя персонажа",
+    "interface.new_game.new_game_button": "Начать игру",
+
+    "interface.settings.lang_settings.title": "Настройка локализации",
+    "interface.settings.lang_settings.lang_selector": "Выберите язык"
+}

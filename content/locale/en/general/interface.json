@@ -1,0 +1,56 @@
+{
+
+    "interface.dialog_window.option.ok": "OK",
+    "interface.dialog_window.option.cancel": "Cancel",
+    "interface.dialog_window.option.yes": "Yes",
+    "interface.dialog_window.option.no": "No",
+
+    "interface.dialog_window.return_back": "Return back",
+    "interface.dialog_window.return_to_main_menu": "Return to menu",
+    "interface.dialog_window.are_you_ready_to_delete": "Are you sure you want to delete this save?",
+    "interface.dialog_window.next_char_will_be_deleted": "Next character will be deleted",
+
+    "interface.info_window.lang_was_changed": "Language was successfully changed",
+    "interface.info_window.need_to_reload": "Please, reload the game",
+
+    "interface.error_window.character_already_exists": "Character already exists",
+    "interface.error_window.empty_name": "Enter character name",
+
+    "interface.bottom.navigation": "Navigation",
+    "interface.bottom.enter": "Enter",
+    "interface.bottom.load": "Load",
+    "interface.bottom.admit": "Admit",
+    "interface.bottom.back": "Back",
+    "interface.bottom.active_panel_change": "Active panel change",
+    "interface.bottom.active_tab_change": "Active tab change",
+    "interface.bottom.delete_save": "Delete save",
+    "interface.bottom.performance_monitor": "Performance monitor",
+
+    "interface.main_menu.title": "Update",
+    "interface.main_menu.continue_game": "Continue game",
+    "interface.main_menu.new_game": "New game",
+    "interface.main_menu.load_game": "Load game",
+    "interface.main_menu.settings": "Settings",
+    "interface.main_menu.controls": "Controls",
+    "interface.main_menu.exit": "Exit",
+
+    "interface.settings.title": "Settings",
+    "interface.settings.graphic": "Graphic",
+    "interface.settings.audio": "Audio",
+    "interface.settings.language": "Language",
+
+    "interface.settings.audio_settings.title": "Audio settings",
+    "interface.settings.audio_settings.bg_music_volume_selector": "Background music volume",
+
+    "interface.load_game.title": "Load game",
+    "interface.load_game.table.character": "Character",
+    "interface.load_game.table.save_date": "Date",
+    "interface.load_game.table.level": "Level",
+
+    "interface.new_game.title": "New game",
+    "interface.new_game.char_name_input": "Enter character name",
+    "interface.new_game.new_game_button": "Start game",
+
+    "interface.settings.lang_settings.title": "Language settings",
+    "interface.settings.lang_settings.lang_selector": "Choose language"
+}

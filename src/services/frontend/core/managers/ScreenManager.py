@@ -8,6 +8,8 @@ class ScreenManager:
     """
     Класс, представляющий менеджер экранов
     """
+    _instance = None
+    
     _audio_manager = AudioManager.get_instance()
     
     _screens: Dict[str, Dict[str, Any]] = {}
@@ -15,6 +17,12 @@ class ScreenManager:
     _current_screen_instance: Optional['Screen'] = None
     _screen_history: List[str] = []  # История экранов для возврата назад
     _active_instances: Dict[str, 'Screen'] = {}  # Словарь активных экземпляров экранов
+    
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
 
     @classmethod
     def add_screen(cls, name: str, screens_dict: Dict[str, Any]):

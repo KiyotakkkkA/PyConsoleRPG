@@ -106,4 +106,5 @@ class Panel(Component):
         screen.draw_text(self.title_x, self.y, self.title, self.title_color, Color.RESET)
             
         for child in self.children:
+            if not child.visible: continue
             child.draw(screen)

@@ -7,12 +7,7 @@ from typing import Callable, Tuple, List
 
 class DialogWindow(Panel):
     
-    __phrases = {
-        'OK': 'Хорошо [1]',
-        'YES': 'Да [1]',
-        'NO': 'Нет [2]',
-        'CANCEL': 'Отмена [3]'
-    }
+    __phrases = {}
     
     def __init__(self, x: int, y: int, width: int,
                  height: int, filler=" ",
@@ -39,6 +34,8 @@ class DialogWindow(Panel):
             text_color: Цвет текста компонента (по умолчанию Color.WHITE)
         """
         super().__init__(x, y, width, height, '', filler, Alignment.LEFT, paddings, border_color, filler_color)
+        
+        self._set_phrases()
         
         self.reactive('text', text)
         self.reactive('ctype', ctype)
@@ -93,6 +90,15 @@ class DialogWindow(Panel):
     def process_action(self, action: Callable[[], None]):
         if not self.active: return
         action()
+        
+    @classmethod
+    def _set_phrases(cls):
+        cls.__phrases = {
+            'OK': cls._locale_manager['interface.dialog_window.option.ok'] + " [1]",
+            'YES': cls._locale_manager['interface.dialog_window.option.yes'] + " [1]",
+            'NO': cls._locale_manager['interface.dialog_window.option.no'] + " [2]",
+            'CANCEL': cls._locale_manager['interface.dialog_window.option.cancel'] + " [3]"
+        }
 
         
         

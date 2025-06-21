@@ -1,8 +1,7 @@
 from typing import List, Dict, Callable, Set, Tuple, TYPE_CHECKING
-from src.services.output import Color
-from src.services.output.WinConsole import WinConsole
-from src.services.events import EventListener
-from src.services.events.KeyListener import KeyListener, Keys
+from src.services.output import Color, WinConsole
+from src.services.events import EventListener, KeyListener, Keys
+from src.services.backend.managers import LocaleManager, GlobalMetadataManager
 from .ScreenPixel import ScreenPixel
 from .Component import Component
 
@@ -20,8 +19,12 @@ class Screen(EventListener):
     
     _instances = {}
     
+    _locale_manager = LocaleManager.get_instance()
+    _global_metadata_manager = GlobalMetadataManager.get_instance()
+    
     def __init__(self):
         super().__init__()
+        
         self.win_console = WinConsole()
         self.width = self.win_console.width
         self.height = self.win_console.height
@@ -31,6 +34,7 @@ class Screen(EventListener):
         
         self.children: List[Component] = []
         self.is_active = True
+        self.is_in_dialog = False
         self.performance_vision = False
         self.performance_checker = None
         
@@ -44,6 +48,132 @@ class Screen(EventListener):
         self._instances[self.__class__.__name__] = self
         
         KeyListener().register_screen(self)
+        
+    def with_error_dialog_window_preset(self, text: str,
+                                       pos: Tuple[int, int],
+                                       size: Tuple[int, int],
+                                       text_color: str = Color.BRIGHT_RED):
+        """
+        Добавляет на экран предустановленный компонент DialogWindow с для отображения ошибок
+        
+        Args:
+            text: Текст, отображаемый в диалоговом окне
+            pos: Позиция диалогового окна (x, y)
+            size: Размер диалогового окна (ширина, высота)
+            text_color: Цвет текста в диалоговом окне
+        """
+        from src.services.frontend.ui.containers import DialogWindow
+        
+        if self.is_in_dialog: return
+        
+        self.error_dialog_window = DialogWindow(x=pos[0],
+                                          y=pos[1],
+                                          width=size[0],
+                                          height=size[1],
+                                          text=text,
+                                          ctype="OK",
+                                          text_color=text_color)
+        
+        self.is_in_dialog = True
+        
+        self.add_child(self.error_dialog_window)
+        self.error_dialog_window.set_active(True)
+        
+        self.error_dialog_window.bind_yes(self.error_dialog_window_close_dialog)
+        
+    def with_info_dialog_window_preset(self, text: str,
+                                       pos: Tuple[int, int],
+                                       size: Tuple[int, int],
+                                       text_color: str = Color.BRIGHT_YELLOW):
+        """
+        Добавляет на экран предустановленный компонент DialogWindow с для отображения сообщений
+        
+        Args:
+            text: Текст, отображаемый в диалоговом окне
+            pos: Позиция диалогового окна (x, y)
+            size: Размер диалогового окна (ширина, высота)
+            text_color: Цвет текста в диалоговом окне
+        """
+        from src.services.frontend.ui.containers import DialogWindow
+        
+        if self.is_in_dialog: return
+        
+        self.info_dialog_window = DialogWindow(x=pos[0],
+                                          y=pos[1],
+                                          width=size[0],
+                                          height=size[1],
+                                          text=text,
+                                          ctype="OK",
+                                          text_color=text_color)
+        
+        self.is_in_dialog = True
+        
+        self.add_child(self.info_dialog_window)
+        self.info_dialog_window.set_active(True)
+        
+        self.info_dialog_window.bind_yes(self.info_dialog_window_close_dialog)
+        
+    def with_redirect_to_dialog_window_preset(self, text: str,
+                                              pos: Tuple[int, int],
+                                              size: Tuple[int, int],
+                                              text_color: str = Color.BRIGHT_YELLOW,
+                                              screen_name: str = 'main'):
+        """
+        Добавляет на экран предустановленный компонент DialogWindow с для переключения между экранами
+        Активация по нажатию клавиши ESC
+        
+        Args:
+            text: Текст, отображаемый в диалоговом окне
+            pos: Позиция диалогового окна (x, y)
+            size: Размер диалогового окна (ширина, высота)
+            text_color: Цвет текста в диалоговом окне
+            screen_name: Имя экрана, на который переключается при нажатии на "Да"
+        """
+        from src.services.frontend.ui.containers import DialogWindow
+        
+        self.redirect_dialog_window = DialogWindow(x=pos[0],
+                                          y=pos[1],
+                                          width=size[0],
+                                          height=size[1],
+                                          text=text,
+                                          ctype="YES_NO",
+                                          text_color=text_color)
+        
+        self.bind_key(Keys.ESCAPE, lambda name=screen_name: self.redirect_dialog_window_ask_to_return(name))
+    
+    def redirect_dialog_window_ask_to_return(self, screen_name: str):
+        if self.is_in_dialog: return
+        
+        self.is_in_dialog = True
+        
+        self.add_child(self.redirect_dialog_window)
+        self.redirect_dialog_window.set_active(True)
+        
+        self.redirect_dialog_window.bind_yes(lambda name=screen_name: self.redirect_dialog_window_return_to_menu(name))
+        self.redirect_dialog_window.bind_no(self.redirect_dialog_window_close_dialog)
+    
+    def redirect_dialog_window_return_to_menu(self, screen_name: str):
+        from src.Game import Game
+        
+        self.redirect_dialog_window.set_active(False)
+        self.unbind_child(self.redirect_dialog_window)
+        self.is_in_dialog = False
+        Game.screen_manager.navigate_to_screen(screen_name)
+            
+    def redirect_dialog_window_close_dialog(self):
+        self.redirect_dialog_window.set_active(False)
+        self.unbind_child(self.redirect_dialog_window)
+        self.is_in_dialog = False
+        
+    def info_dialog_window_close_dialog(self):
+        self.info_dialog_window.set_active(False)
+        self.unbind_child(self.info_dialog_window)
+        self.is_in_dialog = False
+        
+    def error_dialog_window_close_dialog(self):
+        self.error_dialog_window.set_active(False)
+        self.unbind_child(self.error_dialog_window)
+        self.is_in_dialog = False
         
     def init(self):
         """Выполняется 1 раз при создании экрана"""
@@ -201,7 +331,6 @@ class Screen(EventListener):
         
         self.win_console.write_output_buffer(self.front_buffer, self.width, self.height)
         
-
     def _update(self) -> None:
         """Обновление экрана: сначала отрисовка в back_buffer, затем swap и render"""
         KeyListener().update()
@@ -211,6 +340,9 @@ class Screen(EventListener):
         self.update()
         
         for child in self.children:
+            if not child.visible:
+                continue
+            
             child.draw(self)
             
         if self.performance_vision and self.performance_checker is not None:

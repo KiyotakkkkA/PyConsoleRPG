@@ -11,8 +11,7 @@ class NewGameScene(Screen):
     def __init__(self):
         super().__init__()
         self.performance_vision = True
-        
-        self.is_in_dialog = False
+
         self.is_mounted = False
         
         self.new_player_data = {
@@ -26,7 +25,6 @@ class NewGameScene(Screen):
         self.current_component_index = 0
         
         self.bind_key(Keys.F1, self.toggle_performance_monitor)
-        self.bind_key(Keys.ESCAPE, self.ask_to_return)
         self.bind_key(Keys.UP, self.move_up)
         self.bind_key(Keys.DOWN, self.move_down)
         
@@ -61,32 +59,17 @@ class NewGameScene(Screen):
         self.enable_performance_monitor(self.performance_vision)
         
     def init(self):
+        self.with_redirect_to_dialog_window_preset(f"{self._locale_manager['interface.dialog_window.return_to_main_menu']}?", (self.get_w() // 2 - 40 // 2, self.get_h() // 2 - 25), (40, 7), Color.BRIGHT_YELLOW)
+        
         self.main_panel = Panel(1, 1, self.get_w() - 2, self.get_h() - 2, "", border_color=Color.WHITE, title_color=Color.YELLOW)
         self.add_child(self.main_panel)
         
-        title_art = ToArtConverter.text_to_art("Новая игра")
+        title_art = ToArtConverter.text_to_art(self._locale_manager['interface.new_game.title'])
         title_x = self.get_w() // 2 - len(title_art[0]) // 2 + 1
         title_y = self.get_h() // 10
         
         self.title = Text(title_x, title_y, "\n".join(title_art), Color.BRIGHT_YELLOW, Color.RESET)
         self.add_child(self.title)
-        
-        self.dialog_window = DialogWindow(x=self.get_w() // 2 - 20,
-                                          y=self.get_h() // 2 - 25,
-                                          width=40,
-                                          height=7,
-                                          text="Вернуться в главное меню?",
-                                          ctype="YES_NO",
-                                          text_color=Color.BRIGHT_YELLOW)
-    
-        error_window_width = 20
-        self.error_window = DialogWindow(x=self.get_w() // 2 - error_window_width // 2,
-                                          y=self.get_h() // 2 - 25,
-                                          width=error_window_width,
-                                          height=7,
-                                          text="",
-                                          ctype="OK",
-                                          text_color=Color.BRIGHT_RED)
 
         panel_w = 70
         panel_h = 8
@@ -105,7 +88,7 @@ class NewGameScene(Screen):
         self.name_input = Input(x=input_x,
                                 y=input_y,
                                 width=self.menu_panel.width - 6,
-                                label_title="Введите имя персонажа: ",
+                                label_title=f"{self._locale_manager['interface.new_game.char_name_input']}:",
                                 label_color=Color.BRIGHT_BLACK,
                                 label_selected_color=Color.BRIGHT_YELLOW,
                                 label_active_color=Color.YELLOW,
@@ -122,7 +105,7 @@ class NewGameScene(Screen):
         self.new_game_button = Button(x=input_x,
                                       y=input_y + self.name_input.height + 2,
                                       width=1,
-                                      text="[Начать игру]",
+                                      text=f"[{self._locale_manager['interface.new_game.new_game_button']}]",
                                       action=self.new_game,
                                       fg_color=Color.BRIGHT_BLACK,
                                       bg_color=Color.RESET,
@@ -134,7 +117,11 @@ class NewGameScene(Screen):
         self.help_panel_w = self.get_w() - 2
         self.help_panel = Panel(1, self.get_h() - self.help_panel_height, self.help_panel_w, self.help_panel_height, "", " ", Alignment.LEFT, border_color=Color.BRIGHT_BLACK, paddings=(1, 0, 0, 0))
         
-        text = Text(self.help_panel.x + 1, self.help_panel.y, "↑↓: Навигация, Enter: Выбрать, Esc: Назад, F1: Монитор производительности", Color.BRIGHT_BLACK, Color.RESET)
+        text = Text(self.help_panel.x + 1, self.help_panel.y, 
+                    f"↑↓: {self._locale_manager['interface.bottom.navigation']}, " + \
+                    f"Enter: {self._locale_manager['interface.bottom.enter']}, " + \
+                    f"Esc: {self._locale_manager['interface.bottom.back']}, " + \
+                    f"F1: {self._locale_manager['interface.bottom.performance_monitor']}", Color.BRIGHT_BLACK, Color.RESET)
         self.help_panel.add_child(text)
         
         self.add_child(self.name_input)
@@ -149,12 +136,12 @@ class NewGameScene(Screen):
         if not name:
             return {
                 'status': False,
-                'message': 'Введите имя персонажа'
+                'message': self._locale_manager['interface.error_window.empty_name']
             }
         if os.path.exists(f"{Game.SAVES_DIR}/{name}"):
             return {
                 'status': False,
-                'message': 'Сохранение с таким именем уже существует'
+                'message': self._locale_manager['interface.error_window.character_already_exists']
             }
         return {
             'status': True,
@@ -175,12 +162,11 @@ class NewGameScene(Screen):
         
         validation = self.validate_data()
         if not validation['status']:
-            self.error_window.set_text(validation['message'])
-            self.error_window.set_active(True)
-            self.add_child(self.error_window)
-            
-            self.error_window.bind_yes(self.dialog_accept_error)
-            self.new_game_button.set_selected(False)
+            self.with_error_dialog_window_preset(
+                text=validation['message'],
+                pos=(self.get_w() // 2 - 40 // 2, self.get_h() // 2 - 25),
+                size=(40, 7)
+            )
             return
         
         self.emit_event("new_game_was_created", {'save_name': self.new_player_data['name']})
@@ -189,36 +175,6 @@ class NewGameScene(Screen):
     def enter_name_event(self, data):
         self.new_player_data['name'] = data['value']
         self.name_input.set_selected(True)
-        
-    def ask_to_return(self):
-        if self.is_in_dialog: return
-        
-        self.is_in_dialog = True
-        
-        self.add_child(self.dialog_window)
-        self.dialog_window.set_active(True)
-        
-        self.dialog_window.bind_yes(self.dialog_return_to_menu)
-        self.dialog_window.bind_no(self.dialog_close_dialog)
-    
-    def dialog_return_to_menu(self):
-        from src.Game import Game
-        
-        self.dialog_window.set_active(False)
-        self.unbind_child(self.dialog_window)
-        self.is_in_dialog = False
-        Game.screen_manager.navigate_to_screen('main')
-            
-    def dialog_close_dialog(self):
-        self.dialog_window.set_active(False)
-        self.unbind_child(self.dialog_window)
-        self.is_in_dialog = False
-        
-    def dialog_accept_error(self):
-        self.error_window.set_active(False)
-        self.unbind_child(self.error_window)
-        self.is_in_dialog = False
-        self.new_game_button.set_selected(True)
         
     def on_mount(self):
         self.components_order[self.current_component_index].set_active(True)

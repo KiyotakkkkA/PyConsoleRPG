@@ -2,6 +2,7 @@ from src.entities.interfaces import Computable
 from typing import List, Any, Dict, Set, Callable, Tuple
 from src.services.events.KeyListener import KeyListener, Keys
 from src.services.storage.State import State
+from src.services.backend.managers import LocaleManager
 from src.config.Config import Config
 from typing import TYPE_CHECKING
 
@@ -14,6 +15,8 @@ class Component(Computable):
     """
     
     _base_sounds_dir = Config.SOUNDS_DIR
+    
+    _locale_manager = LocaleManager.get_instance()
     
     def __init__(self, x: int, y: int, width: int, height: int, paddings: tuple = (1, 1, 1, 1)):
         """
@@ -44,6 +47,7 @@ class Component(Computable):
         
         self.reactive('active', False)
         self.reactive('selected', False)
+        self.reactive('visible', True)
         
         self.reactive('children', [])
         self.reactive('parent', None)
@@ -56,6 +60,15 @@ class Component(Computable):
         
         self.computed('inner_width', lambda: self.width - self.paddings[2] - self.paddings[3], ['width', 'paddings'])
         self.computed('inner_height', lambda: self.height - self.paddings[0] - self.paddings[1], ['height', 'paddings'])
+    
+    def set_visible(self, visible: bool):
+        """
+        Устанавливает видимость компонента и определяет, нужно ли рендерить компонент
+        
+        Args:
+            visible: Флаг, определяющий видимость компонента
+        """
+        self.visible = visible
         
     def set_allow_sound(self, allow_sound: bool):
         """

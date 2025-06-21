@@ -10,10 +10,7 @@ class SettingsScene(Screen):
         super().__init__()
         self.performance_vision = True
         
-        self.is_in_dialog = False
-        
         self.bind_key(Keys.F1, self.toggle_performance_monitor)
-        self.bind_key(Keys.ESCAPE, self.ask_to_return)
         
     def toggle_performance_monitor(self):
         """Включение/выключение монитора производительности"""
@@ -21,18 +18,12 @@ class SettingsScene(Screen):
         self.enable_performance_monitor(self.performance_vision)
         
     def init(self):
+        self.with_redirect_to_dialog_window_preset(f"{self._locale_manager['interface.dialog_window.return_to_main_menu']}?", (self.get_w() // 2 - 40 // 2, self.get_h() // 2 - 25), (40, 7), Color.BRIGHT_YELLOW)
+        
         self.main_panel = Panel(1, 1, self.get_w() - 2, self.get_h() - 2, "", border_color=Color.WHITE, title_color=Color.YELLOW)
         self.add_child(self.main_panel)
         
-        self.dialog_window = DialogWindow(x=self.get_w() // 2 - 20,
-                                          y=self.get_h() // 2 - 25,
-                                          width=40,
-                                          height=7,
-                                          text="Вернуться в главное меню?",
-                                          ctype="YES_NO",
-                                          text_color=Color.BRIGHT_YELLOW)
-        
-        title_art = ToArtConverter.text_to_art("Настройки")
+        title_art = ToArtConverter.text_to_art(self._locale_manager['interface.settings.title'])
         title_x = self.get_w() // 2 - len(title_art[0]) // 2 + 1
         title_y = self.get_h() // 10
         
@@ -46,9 +37,9 @@ class SettingsScene(Screen):
         self.add_child(self.menu)
         
         self.menu.add_items([
-            (("Графика", Color.WHITE), Keys.G, self.to_setting_graphic),
-            (("Звук", Color.WHITE), Keys.A, self.to_setting_audio),
-            (("Язык", Color.WHITE), Keys.L, self.to_setting_language),
+            ((self._locale_manager['interface.settings.graphic'], Color.WHITE), Keys.G, self.to_setting_graphic),
+            ((self._locale_manager['interface.settings.audio'], Color.WHITE), Keys.A, self.to_setting_audio),
+            ((self._locale_manager['interface.settings.language'], Color.WHITE), Keys.L, self.to_setting_language),
         ])
         
         self.menu.set_selection(0)
@@ -58,7 +49,11 @@ class SettingsScene(Screen):
         self.help_panel_w = self.get_w() - 2
         self.help_panel = Panel(1, self.get_h() - self.help_panel_height, self.help_panel_w, self.help_panel_height, "", " ", Alignment.LEFT, border_color=Color.BRIGHT_BLACK, paddings=(1, 0, 0, 0))
         
-        text = Text(self.help_panel.x + 1, self.help_panel.y, "↑↓: Навигация, Enter: Выбрать, Esc: Назад, F1: Монитор производительности", Color.BRIGHT_BLACK, Color.RESET)
+        text = Text(self.help_panel.x + 1, self.help_panel.y, 
+                    f"↑↓: {self._locale_manager['interface.bottom.navigation']}, " + \
+                    f"Enter: {self._locale_manager['interface.bottom.enter']}, " + \
+                    f"Esc: {self._locale_manager['interface.bottom.back']}, " + \
+                    f"F1: {self._locale_manager['interface.bottom.performance_monitor']}", Color.BRIGHT_BLACK, Color.RESET)
         self.help_panel.add_child(text)
         
         self.add_child(self.help_panel)
@@ -73,31 +68,7 @@ class SettingsScene(Screen):
         
     def to_setting_language(self):
         from src.Game import Game
-        Game.screen_manager.navigate_to_screen("language_settings")
-    
-    def ask_to_return(self):
-        if self.is_in_dialog: return
-        
-        self.is_in_dialog = True
-        
-        self.add_child(self.dialog_window)
-        self.dialog_window.set_active(True)
-        
-        self.dialog_window.bind_yes(self.dialog_return_to_menu)
-        self.dialog_window.bind_no(self.dialog_close_dialog_return_to_menu)
-        
-    def dialog_return_to_menu(self):
-        from src.Game import Game
-        
-        self.dialog_window.set_active(False)
-        self.unbind_child(self.dialog_window)
-        self.is_in_dialog = False
-        Game.screen_manager.navigate_to_screen('main')
-            
-    def dialog_close_dialog_return_to_menu(self):
-        self.dialog_window.set_active(False)
-        self.unbind_child(self.dialog_window)
-        self.is_in_dialog = False
+        Game.screen_manager.navigate_to_screen("lang_settings")
         
     def update(self):
         pass

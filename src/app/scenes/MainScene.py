@@ -59,7 +59,7 @@ class MainScene(Screen):
         self.main_panel = Panel(1, 1, self.get_w() - 2, self.get_h() - 2, "", border_color=Color.WHITE, title_color=Color.YELLOW)
         self.add_child(self.main_panel)
         
-        title_art = ToArtConverter.text_to_art("Обновление")
+        title_art = ToArtConverter.text_to_art(self._locale_manager['interface.main_menu.title'])
         title_x = self.get_w() // 2 - len(title_art[0]) // 2 + 1
         title_y = self.get_h() // 10
         
@@ -73,12 +73,12 @@ class MainScene(Screen):
         self.add_child(self.menu)
         
         self.menu.add_items([
-            (("Продолжить игру", Color.WHITE), Keys.Q, lambda: MainScene.continue_game()),
-            (("Новая игра", Color.WHITE), Keys.N, lambda: MainScene.new_game()),
-            (("Загрузить игру", Color.WHITE), Keys.L, lambda: MainScene.load_game()),
-            (("Настройки", Color.WHITE), Keys.S, lambda: MainScene.settings()),
-            (("Управление", Color.WHITE), Keys.C, lambda: MainScene.controls()),
-            (("Выход", Color.WHITE), Keys.Q, lambda: MainScene.exit()),
+            ((self._locale_manager['interface.main_menu.continue_game'], Color.WHITE), Keys.Q, lambda: MainScene.continue_game()),
+            ((self._locale_manager['interface.main_menu.new_game'], Color.WHITE), Keys.N, lambda: MainScene.new_game()),
+            ((self._locale_manager['interface.main_menu.load_game'], Color.WHITE), Keys.L, lambda: MainScene.load_game()),
+            ((self._locale_manager['interface.main_menu.settings'], Color.WHITE), Keys.S, lambda: MainScene.settings()),
+            ((self._locale_manager['interface.main_menu.controls'], Color.WHITE), Keys.C, lambda: MainScene.controls()),
+            ((self._locale_manager['interface.main_menu.exit'], Color.WHITE), Keys.Q, lambda: MainScene.exit()),
         ])
         
         self.menu.set_selection(0)
@@ -88,7 +88,10 @@ class MainScene(Screen):
         self.help_panel_w = self.get_w() - 2
         self.help_panel = Panel(1, self.get_h() - self.help_panel_height, self.help_panel_w, self.help_panel_height, "", " ", Alignment.LEFT, border_color=Color.BRIGHT_BLACK, paddings=(1, 0, 0, 0))
         
-        text = Text(self.help_panel.x + 1, self.help_panel.y, "↑↓: Навигация, Enter: Выбрать, F1: Монитор производительности", Color.BRIGHT_BLACK, Color.RESET)
+        text = Text(self.help_panel.x + 1, self.help_panel.y, 
+                    f"↑↓: {self._locale_manager['interface.bottom.navigation']}, " + \
+                    f"Enter: {self._locale_manager['interface.bottom.enter']}, " + \
+                    f"F1: {self._locale_manager['interface.bottom.performance_monitor']}", Color.BRIGHT_BLACK, Color.RESET)
         self.help_panel.add_child(text)
         
         self.add_child(self.help_panel)

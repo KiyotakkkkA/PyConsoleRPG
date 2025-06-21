@@ -13,11 +13,9 @@ class LoadGameScene(Screen):
         super().__init__()
         self.performance_vision = True
         
-        self.is_in_dialog = False
         self.is_mounted = False
         
         self.bind_key(Keys.F1, self.toggle_performance_monitor)
-        self.bind_key(Keys.ESCAPE, self.ask_to_return)
         self.bind_key(Keys.X, self.ask_to_delete_save)
         
     def toggle_performance_monitor(self):
@@ -26,23 +24,17 @@ class LoadGameScene(Screen):
         self.enable_performance_monitor(self.performance_vision)
         
     def init(self):
+        self.with_redirect_to_dialog_window_preset(f"{self._locale_manager['interface.dialog_window.return_to_main_menu']}?", (self.get_w() // 2 - 40 // 2, self.get_h() // 2 - 25), (40, 7), Color.BRIGHT_YELLOW)
+        
         self.main_panel = Panel(1, 1, self.get_w() - 2, self.get_h() - 2, "", border_color=Color.WHITE, title_color=Color.YELLOW)
         self.add_child(self.main_panel)
         
-        title_art = ToArtConverter.text_to_art("Загрузка сохранения")
+        title_art = ToArtConverter.text_to_art(f"{self._locale_manager['interface.load_game.title']}")
         title_x = self.get_w() // 2 - len(title_art[0]) // 2 + 1
         title_y = self.get_h() // 10
         
         self.title = Text(title_x, title_y, "\n".join(title_art), Color.BRIGHT_YELLOW, Color.RESET)
         self.add_child(self.title)
-        
-        self.dialog_window = DialogWindow(x=self.get_w() // 2 - 20,
-                                          y=self.get_h() // 2 - 25,
-                                          width=40,
-                                          height=7,
-                                          text="Вернуться в главное меню?",
-                                          ctype="YES_NO",
-                                          text_color=Color.BRIGHT_YELLOW)
         
         sure_to_delete_text = "Вы уверены, что хотите удалить это сохранение?"
         self.sure_to_delete_window = DialogWindow(x=self.get_w() // 2 - 20,
@@ -54,9 +46,9 @@ class LoadGameScene(Screen):
                                                   text_color=Color.BRIGHT_RED)
         
         self.saves_table = Table(10, 12, self.get_w() - 20, [
-            "Персонаж",
-            'Уровень',
-            'Дата сохранения',
+            self._locale_manager['interface.load_game.table.character'],
+            self._locale_manager['interface.load_game.table.level'],
+            self._locale_manager['interface.load_game.table.save_date'],
         ], [
             (Color.YELLOW, Color.RESET),
             (Color.YELLOW, Color.RESET),
@@ -68,7 +60,12 @@ class LoadGameScene(Screen):
         self.help_panel_w = self.get_w() - 2
         self.help_panel = Panel(1, self.get_h() - self.help_panel_height, self.help_panel_w, self.help_panel_height, "", " ", Alignment.LEFT, border_color=Color.BRIGHT_BLACK, paddings=(1, 0, 0, 0))
         
-        text = Text(self.help_panel.x + 1, self.help_panel.y, "↑↓: Навигация, Enter: Загрузить, Esc: Назад, F1: Монитор производительности, X: Удалить сохранение", Color.BRIGHT_BLACK, Color.RESET)
+        text = Text(self.help_panel.x + 1, self.help_panel.y, 
+                    f"↑↓: {self._locale_manager['interface.bottom.navigation']}, " + \
+                    f"Enter: {self._locale_manager['interface.bottom.load']}, " + \
+                    f"Esc: {self._locale_manager['interface.bottom.back']}, " + \
+                    f"F1: {self._locale_manager['interface.bottom.performance_monitor']}, " + \
+                    f"X: {self._locale_manager['interface.bottom.delete_save']}", Color.BRIGHT_BLACK, Color.RESET)
         self.help_panel.add_child(text)
         
         self.add_child(self.saves_table)
@@ -116,17 +113,6 @@ class LoadGameScene(Screen):
         if Game.load():
             self.emit_event("game_was_loaded", {'save_name': save_name})
             Game.screen_manager.navigate_to_screen("game")
-    
-    def ask_to_return(self):
-        if self.is_in_dialog: return
-        
-        self.is_in_dialog = True
-        
-        self.add_child(self.dialog_window)
-        self.dialog_window.set_active(True)
-        
-        self.dialog_window.bind_yes(self.dialog_return_to_menu)
-        self.dialog_window.bind_no(self.dialog_close_dialog_return_to_menu)
         
     def ask_to_delete_save(self):        
         if self.is_in_dialog: return
@@ -138,7 +124,11 @@ class LoadGameScene(Screen):
         
         data = self.saves_table.get_selected_row_data()
         if data:
-            self.sure_to_delete_window.set_text(f"Вы уверены, что хотите удалить сохранение?\n\nСледующий персонаж будет удален:\n\n[{data[1]}]")
+            self.sure_to_delete_window.set_text(
+                self._locale_manager['interface.dialog_window.are_you_ready_to_delete'] + "\n\n" + \
+                self._locale_manager['interface.dialog_window.next_char_will_be_deleted'] + ":\n\n" + \
+                f"[{data[1]}]"
+            )
         
         self.sure_to_delete_window.bind_yes(self.dialog_delete_save)
         self.sure_to_delete_window.bind_no(self.dialog_close_delete_save)
@@ -154,19 +144,6 @@ class LoadGameScene(Screen):
     def dialog_close_delete_save(self):
         self.sure_to_delete_window.set_active(False)
         self.unbind_child(self.sure_to_delete_window)
-        self.is_in_dialog = False
-    
-    def dialog_return_to_menu(self):
-        from src.Game import Game
-        
-        self.dialog_window.set_active(False)
-        self.unbind_child(self.dialog_window)
-        self.is_in_dialog = False
-        Game.screen_manager.navigate_to_screen('main')
-            
-    def dialog_close_dialog_return_to_menu(self):
-        self.dialog_window.set_active(False)
-        self.unbind_child(self.dialog_window)
         self.is_in_dialog = False
         
     def update(self):

@@ -30,7 +30,7 @@ class Selector(Component):
                  selection_type: str = 'prev-current-next',
                  min_value: int = 0,
                  max_value: int = 10,
-                 options: list[str] = []):
+                 options: list[tuple[str, str]] = []):
         """
         Инициализация компонента Selector
         
@@ -42,10 +42,13 @@ class Selector(Component):
             label_color: Цвет заголовка
             label_selected_color: Цвет заголовка при фокусе
             label_active_color: Цвет заголовка при активности
+            value_color: Цвет значения
+            value_selected_color: Цвет значения при фокусе
+            value_active_color: Цвет значения при активности
             enter_data_event_name: Имя события, которое будет генерироваться при нажатии Enter
             min_value: Минимальное значение для типа minus-current-plus
             max_value: Максимальное значение для типа minus-current-plus
-            options: Список вариантов для типов prev-current-next и none-current-none
+            options: Список вариантов для типов prev-current-next и none-current-none (value, name)
             selection_type: Тип оформления
             - Возможные значения selection_type:
                 none-current-none: Нет оформления
@@ -122,7 +125,7 @@ class Selector(Component):
         """
         if self.is_type_minus_current_plus():
             return self.current_value
-        return self.options[self.current_index]
+        return self.options[self.current_index][0]
     
     def set_value(self, value: int):
         """
@@ -135,6 +138,21 @@ class Selector(Component):
             return
         
         self.current_value = min(max(value, self.min_value), self.max_value)
+        
+    def set_option(self, key: str):
+        """
+        Установка опции по ключу [работает только в режиме prev-current-next и none-current-none]
+        
+        Args:
+            key: Ключ опции
+        """
+        if not self.is_type_prev_current_next() and not self.is_type_none_current_none():
+            return
+        
+        for option in self.options:
+            if option[0] == key:
+                self.current_index = self.options.index(option)
+                return
         
     def _on_enter(self):
         if self.selected and not self.active:
@@ -177,7 +195,7 @@ class Selector(Component):
     def _configure_none_current_none_mode(self, screen: 'Screen'):
         self.prev_bracket.set_text("<")
         
-        data_to_display = f" {self.options[self.current_index]} "
+        data_to_display = f" {self.options[self.current_index][1]} "
         self.current.set_text(data_to_display)
     
         self.next_bracket.set_text(">")
@@ -191,7 +209,7 @@ class Selector(Component):
         
         self.prev_bracket.set_text("<")
         
-        data_to_display = f" {self.current_value} "
+        data_to_display = f"{self.current_value}"
         self.current.set_text(data_to_display)
         
         self.next_bracket.set_text(">")
@@ -206,11 +224,11 @@ class Selector(Component):
         if self.current_index == 0:
             self.prev.set_text("")
         else:
-            self.prev.set_text(self.options[self.current_index - 1])
+            self.prev.set_text(self.options[self.current_index - 1][1])
             
         self.prev_bracket.set_text("<")
             
-        data_to_display = f" {self.options[self.current_index]} "
+        data_to_display = f"{self.options[self.current_index][1]}"
         self.current.set_text(data_to_display)
         
         self.next_bracket.set_text(">")
@@ -218,7 +236,7 @@ class Selector(Component):
         if self.current_index == len(self.options) - 1:
             self.next.set_text("")
         else:
-            self.next.set_text(self.options[self.current_index + 1])
+            self.next.set_text(self.options[self.current_index + 1][1])
             
         self._pos_config()
         self._color_config()
