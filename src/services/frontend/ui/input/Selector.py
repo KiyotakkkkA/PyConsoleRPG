@@ -18,7 +18,6 @@ class Selector(Component):
     
     def __init__(self, x: int,
                  y: int,
-                 width: int,
                  enter_data_event_name: str = "enter_data",
                  label_title: str = "",
                  label_color: str = Color.RESET,
@@ -37,7 +36,6 @@ class Selector(Component):
         Args:
             x: Координата x компонента
             y: Координата y компонента
-            width: Ширина компонента
             label_title: Текст заголовка
             label_color: Цвет заголовка
             label_selected_color: Цвет заголовка при фокусе
@@ -55,7 +53,7 @@ class Selector(Component):
                 minus-current-plus: - < data > +
                 prev-current-next: prev < data > next
         """
-        super().__init__(x, y, width, 1, (0, 0, 0, 0))
+        super().__init__(x, y, 1, 1, (0, 0, 0, 0))
         
         self.reactive('enter_data_event_name', enter_data_event_name)
         self.reactive('label_title', label_title)

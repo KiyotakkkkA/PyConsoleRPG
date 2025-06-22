@@ -1,7 +1,7 @@
 from src.services.frontend.ui.containers import Panel
 from src.services.frontend.core.Component import Component
 from src.services.output import Color
-from src.services.events import Keys
+from src.services.events import Keys, EventListener
 from src.config import KEYS_CODES_NAME
 from typing import Tuple, List, TYPE_CHECKING
 
@@ -78,7 +78,10 @@ class Tab(Component):
         if self.control_keys[1]:
             self._events.append((self.control_keys[1], self.move_right))
             
-    def _rebuild_active_links(self):
+    def get_active_tab(self) -> 'TabItem':
+        return self.tabs[self.active_index]
+            
+    def rebuild_active_links(self):
         active_indexes = [i for i, state in self.active_tabs.items() if state['active']]
         for idx, tab_index in enumerate(active_indexes):
             prev_idx = active_indexes[idx - 1] if idx > 0 else active_indexes[-1]
@@ -90,11 +93,15 @@ class Tab(Component):
         if self.active_index in self.active_tabs:
             self.active_index = self.active_tabs[self.active_index]['prev']
             self.play_sound(self.selection_sound)
+            
+            EventListener().emit_event('tab_changed', {'id': self.tabs[self.active_index].id})
         
     def move_right(self):
         if self.active_index in self.active_tabs:
             self.active_index = self.active_tabs[self.active_index]['next']
             self.play_sound(self.selection_sound)
+            
+            EventListener().emit_event('tab_changed', {'id': self.tabs[self.active_index].id})
         
     def move_with_key(self, key: int):
         if key in self.keys_to_tab_indexes:
@@ -102,6 +109,8 @@ class Tab(Component):
             if self.active_tabs[index]['active']:
                 self.active_index = index
                 self.play_sound(self.selection_sound)
+                
+                EventListener().emit_event('tab_changed', {'id': self.tabs[self.active_index].id})
         
     def calculate(self):
         self._calculate_self_size()
@@ -109,12 +118,12 @@ class Tab(Component):
     def disable_tab(self, index: int):
         if index in self.active_tabs:
             self.active_tabs[index]['active'] = False
-            self._rebuild_active_links()
+            self.rebuild_active_links()
         
     def enable_tab(self, index: int):
         if index in self.active_tabs:
             self.active_tabs[index]['active'] = True
-            self._rebuild_active_links()
+            self.rebuild_active_links()
         
     def add_tab(self, id: int, name: str, panel: Panel, key: int):
         tab_item = TabItem(

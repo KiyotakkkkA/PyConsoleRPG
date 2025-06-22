@@ -22,7 +22,7 @@ class Table(Component):
                  overflowing_symbol: str = '...',
                  border_color: tuple[str, str] = Color.BRIGHT_BLACK,):
         """
-        Инициализация таблицы
+        Инициализация компонента Таблица
         
         Args:
             x: Координата x

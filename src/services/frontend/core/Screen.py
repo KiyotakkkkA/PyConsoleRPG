@@ -250,7 +250,7 @@ class Screen(EventListener):
         self.key_handlers[key].add(handler)
         
     def collect_bind_keys(self, Object: 'Screen | Component | Tab'):
-        from src.services.frontend.ui.containers import Panel, Tab, DialogWindow
+        from src.services.frontend.ui.containers import Panel, Tab, MultiPanel
         
         for child in Object.children:
             if len(child._events) > 0:
@@ -261,7 +261,11 @@ class Screen(EventListener):
             if isinstance(child, Tab):
                 for tab in child.tabs:
                     self.collect_bind_keys(tab.panel)
-            
+            if isinstance(child, MultiPanel):
+                for event in child.selector._events:
+                    self.bind_key(event[0], event[1])
+                for panel in child.panels:
+                    self.collect_bind_keys(panel.panel)
         for event in self.components_events:
             self.bind_key(event[0], event[1])
         

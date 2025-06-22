@@ -1,7 +1,10 @@
 from src.services.backend.registers import RegistryLocation, RegistryRegion, RegistryItems
 from src.entities.models import Player
 from src.entities.interfaces import Serializable
-from src.app.scenes import MainScene, GameScene, SettingsScene, NewGameScene, LoadGameScene, AudioSettingScene, LangSettingScene
+from src.app.scenes import MainScene, \
+    GameScene, SettingsScene, NewGameScene, \
+    LoadGameScene, ControlsScene, AudioSettingScene, \
+    LangSettingScene
 from src.services.frontend.core import ScreenManager, AudioManager
 from src.services.backend.managers import GlobalMetadataManager, LocaleManager
 from src.config.Config import Config
@@ -76,6 +79,10 @@ class Game:
                  },
         "game": {
                  "screen": GameScene,
+                 "bg_music": ""
+                 },
+        "controls": {
+                 "screen": ControlsScene,
                  "bg_music": ""
                  },
         "settings": {

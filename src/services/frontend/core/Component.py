@@ -47,6 +47,7 @@ class Component(Computable):
         
         self.reactive('active', False)
         self.reactive('selected', False)
+        self.reactive('events_enabled', True)
         self.reactive('visible', True)
         
         self.reactive('children', [])
@@ -90,6 +91,15 @@ class Component(Computable):
         
         if self.allow_sound and sound:
             AudioManager.get_instance().play_sound(f"{self._base_sounds_dir}/{sound}")
+            
+    def set_events_enabled(self, events_enabled: bool):
+        """
+        Устанавливает возможность обработки событий
+        
+        Args:
+            events_enabled: Флаг, разрешающий обработку событий
+        """
+        self.events_enabled = events_enabled
     
     def set_active(self, active: bool):
         """

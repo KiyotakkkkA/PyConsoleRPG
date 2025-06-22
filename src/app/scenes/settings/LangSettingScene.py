@@ -70,7 +70,6 @@ class LangSettingScene(Screen):
         self.lang_selector = Selector(
             x=self.settings_panel.x + 4,
             y=self.settings_panel.y + 2,
-            width=10,
             label_title=f"{self._locale_manager['interface.settings.lang_settings.lang_selector']}:",
             enter_data_event_name="lang_selector_event",
             selection_type="none-current-none",
