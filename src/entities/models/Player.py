@@ -8,8 +8,10 @@ class Player(EventListener, Computable, Serializable):
         self.initial_location = "main_ruins_of_origins"
         self.initial_region = "main_tierenhall_kingdom"
         self.initial_name = 'BASE_PLAYER'
+        self.initial_race = 'BASE_RACE'
         
         self.reactive('name', self.initial_name)
+        self.reactive('race', self.initial_race)
         
         self.reactive('base_location_relax_time', 5)
         self.reactive('base_speed', 1)
@@ -37,9 +39,9 @@ class Player(EventListener, Computable, Serializable):
         self.reactive('current_exp', 0)
         self.reactive('exp_to_next_level', 100)
         
-        self.computed('total_constitution', lambda: self.additional_constitution + self.base_constitution, ['additional_constitution'])
-        self.computed('total_intelligence', lambda: self.additional_intelligence + self.base_intelligence, ['additional_intelligence'])
-        self.computed('total_endurance', lambda: self.additional_endurance + self.base_endurance, ['additional_endurance'])
+        self.computed('total_constitution', lambda: self.additional_constitution + self.base_constitution, ['additional_constitution', 'base_constitution'])
+        self.computed('total_intelligence', lambda: self.additional_intelligence + self.base_intelligence, ['additional_intelligence', 'base_intelligence'])
+        self.computed('total_endurance', lambda: self.additional_endurance + self.base_endurance, ['additional_endurance', 'base_endurance'])
         
         self.computed('max_health', lambda: (self.total_constitution) * 10, ['total_constitution'])
         self.computed('max_energy', lambda: (self.total_endurance) * 10, ['total_endurance'])
@@ -57,6 +59,15 @@ class Player(EventListener, Computable, Serializable):
     def set_name(self, name: str):
         self.name = name
         self.emit_event("player_name_set", {"name": name})
+        
+    def set_race(self, race_id: str):
+        from src.services.backend.registers import RegistryRace
+        self.race = race_id
+        
+        for char in RegistryRace.get_json_view()[race_id]['race_chars']:
+            setattr(self, f"base_{char}", RegistryRace.get_json_view()[race_id]['race_chars'][char])
+        
+        self.emit_event("player_race_set", {"race_id": race_id})
             
     def get_location_relax_time(self):
         return (1 / self.speed) * self.location_relax_time

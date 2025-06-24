@@ -1,8 +1,5 @@
-from src.services.frontend.core import Screen, Alignment
+from src.services.frontend.core import Screen
 from src.services.events import Keys
-from src.services.output import Color
-from src.services.frontend.ui.containers import MultiPanel
-from src.services.frontend.ui.containers import Panel
 
 class ControlsScene(Screen):    
     def __init__(self):

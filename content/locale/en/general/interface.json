@@ -15,6 +15,7 @@
 
     "interface.error_window.character_already_exists": "Character already exists",
     "interface.error_window.empty_name": "Enter character name",
+    "interface.error_window.empty_race": "Choose race",
 
     "interface.bottom.navigation": "Navigation",
     "interface.bottom.enter": "Enter",
@@ -49,7 +50,12 @@
 
     "interface.new_game.title": "New game",
     "interface.new_game.char_name_input": "Enter character name",
+    "interface.new_game.race_selector": "Choose race",
     "interface.new_game.new_game_button": "Start game",
+    "interface.new_game.race_info_text": "Race: ",
+    "interface.new_game.race_name_text_not_selected": "[Not selected]",
+    "interface.new_game.panel_desc_title": "Description",
+    "interface.new_game.panel_chars_title": "Initial characteristics",
 
     "interface.settings.lang_settings.title": "Language settings",
     "interface.settings.lang_settings.lang_selector": "Choose language"

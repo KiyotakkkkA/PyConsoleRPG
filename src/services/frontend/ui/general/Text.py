@@ -11,7 +11,9 @@ class Text(Component):
     """
     def __init__(self, x: int, y: int, text: str = "", 
                  fg_color: str = Color.WHITE, bg_color: str = Color.RESET,
-                 paddings: tuple = (0, 0, 0, 0)):
+                 paddings: tuple = (0, 0, 0, 0),
+                 auto_break: bool = False,
+                 max_width: int = None):
         """
         Инициализация компонента Text
         
@@ -22,6 +24,8 @@ class Text(Component):
             fg_color: Цвет текста (по умолчанию Color.WHITE)
             bg_color: Цвет фона (по умолчанию Color.RESET)
             paddings: (pt, pb, pr, pl) по умолчанию (0, 0, 0, 0)
+            auto_break: Автоматическое перенос строк (по умолчанию False)
+            max_width: Максимальная ширина компонента (по умолчанию None)
         """
         lines = text.split('\n')
         width = max([len(line) for line in lines]) if lines else 0
@@ -33,6 +37,9 @@ class Text(Component):
         self.reactive('fg_color', fg_color)
         self.reactive('bg_color', bg_color)
         
+        self.reactive('auto_break', auto_break)
+        self.reactive('max_width', max_width)
+        
         self.lines: List[str] = []
         self.process_text()
     
@@ -40,6 +47,21 @@ class Text(Component):
         """
         Обработка текста и разделение его на строки
         """
+        if self.auto_break:
+            _lines = []
+            _words = self.text.replace('\n', ' ').split(' ')
+            
+            for word in _words:
+                if not _lines or len(_lines[-1]) + len(word) + 1 > self.max_width:
+                    _lines.append(word)
+                else:
+                    _lines[-1] += ' ' + word
+            
+            self.lines = _lines
+            self.width = max([len(line) for line in self.lines]) if self.lines else 0
+            self.height = len(self.lines)
+            return
+        
         self.lines = self.text.split('\n')
         self.width = max([len(line) for line in self.lines]) if self.lines else 0
         self.height = len(self.lines)

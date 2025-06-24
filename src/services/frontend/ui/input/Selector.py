@@ -255,16 +255,14 @@ class Selector(Component):
             return self.value_selected_color
         elif self.active:
             return self.value_active_color
-        else:
-            return self.value_color
+        return self.value_color
         
     def _calculate_current_label_color(self):
         if self.selected and not self.active:
             return self.label_selected_color
         elif self.active:
             return self.label_active_color
-        else:
-            return self.label_color
+        return self.label_color
         
     def draw(self, screen: 'Screen'):
         self.label.draw(screen)

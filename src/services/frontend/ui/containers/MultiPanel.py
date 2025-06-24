@@ -1,3 +1,4 @@
+from typing import override
 from src.services.frontend.core import Component, Alignment
 from src.services.output import Color
 from src.services.events import Keys, EventListener
@@ -45,6 +46,11 @@ class MultiPanel(Component):
         self.reactive('options', [])
         self.reactive('panels_ids', {})
         
+        self.reactive('rules', {
+            'tab_criteria': False,
+            'panel_criteria': False
+        })
+        
         self.current_panel = None
         
         self.setup_selector()
@@ -69,7 +75,7 @@ class MultiPanel(Component):
         value_active_color: Цвет значения при активности
     """
     
-    def connect_to_tab(self, tab: 'Tab', tab_id: str):
+    def connect_to_tab(self, tab: 'Tab', tab_id: str, data: dict = None):
         """
         Подключение компонента МультиПанель к компоненту Таб
         Панель будет активна только если активна указанная вкладка
@@ -79,7 +85,18 @@ class MultiPanel(Component):
             tab_id: ID вкладки
         """
         
-        EventListener().on_event("tab_changed", lambda data: self.tab_config(tab, tab_id, data['id']))
+        EventListener().on_event("tab_changed", lambda data: self.tab_config(tab, tab_id, data))
+        
+    def connect_to_panel(self, panel: 'Panel', data: dict = None):
+        """
+        Подключение компонента МультиПанель к компоненту Панель
+        Панель будет активна только если активна указанная панель
+        
+        Args:
+            panel: Компонент Панель
+        """
+        
+        EventListener().on_event("panel_changed", lambda data: self.panel_config(panel, data))
     
     def is_selector_active(self):
         """
@@ -114,11 +131,37 @@ class MultiPanel(Component):
         """
         return self.panels_ids[panel_id]
     
-    def tab_config(self, tab: 'Tab', tab_id: str, data: dict | None):
+    def tab_config(self, tab: 'Tab', tab_id: str, data: dict = None):
         if tab.get_active_tab().id == tab_id:
-            self.set_active(True)
+            self.rules['tab_criteria'] = True
         else:
-            self.set_active(False)
+            self.rules['tab_criteria'] = False
+            
+        array = [
+            self.rules['tab_criteria'],
+            self.rules['panel_criteria']
+        ]
+        
+        self.set_active(all(array))
+        
+        self.selector.set_selected(False)
+        self.selector.set_active(False)
+            
+    def panel_config(self, panel: 'Panel', data: dict = None):
+        if panel.selected:
+            self.rules['panel_criteria'] = True
+        else:
+            self.rules['panel_criteria'] = False
+            
+        array = [
+            self.rules['tab_criteria'],
+            self.rules['panel_criteria']
+        ]
+        
+        self.set_active(all(array))
+        
+        self.selector.set_selected(False)
+        self.selector.set_active(False)
     
     def choose_selector(self):
         if not self.active: return
@@ -127,6 +170,7 @@ class MultiPanel(Component):
         
     def event_selector(self, data):
         self.current_panel = data['value']
+        self.selector.set_selected(False)
         
     def setup_options(self):
         self.options = []

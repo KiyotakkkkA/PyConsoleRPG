@@ -1,0 +1,7 @@
+{
+    "races.main_elf.name": "Elf",
+    "races.main_elf.description": "Race with high intelligence and endurance. Strong in magic, but vulnerable to fire.",
+
+    "races.main_human.name": "Human",
+    "races.main_human.description": "Most common race. Have no vulnerabilities, as well as no strong sides."
+}

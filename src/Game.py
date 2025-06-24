@@ -1,4 +1,5 @@
-from src.services.backend.registers import RegistryLocation, RegistryRegion, RegistryItems
+from src.services.backend.registers import RegistryLocation, RegistryRegion, RegistryItems, \
+    RegistryRace
 from src.entities.models import Player
 from src.entities.interfaces import Serializable
 from src.app.scenes import MainScene, \
@@ -69,6 +70,7 @@ class Game:
         "items": RegistryItems,
         "locations": RegistryLocation,
         "regions": RegistryRegion,
+        "races": RegistryRace
     }
     
     # Регистрация экранов
@@ -125,6 +127,7 @@ class Game:
         cls.game_state = GameState()
         
         cls.player.set_name(new_player_data['name'])
+        cls.player.set_race(new_player_data['race'])
         
         cls.GAME_WAS_LOADED_SUCCESSFULLY = True
         cls.save()
@@ -257,8 +260,8 @@ class Game:
     
     @classmethod
     def init(cls):
+        cls._set_global_settings()
         cls._register_entities()
         cls._register_screens()
-        cls._set_global_settings()
         
         cls.screen_manager.navigate_to_screen("main")

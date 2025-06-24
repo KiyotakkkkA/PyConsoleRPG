@@ -15,6 +15,7 @@
 
     "interface.error_window.character_already_exists": "Персонаж с таким именем уже существует",
     "interface.error_window.empty_name": "Введите имя персонажа",
+    "interface.error_window.empty_race": "Выберите расу",
 
     "interface.bottom.navigation": "Навигация",
     "interface.bottom.enter": "Выбрать",
@@ -49,7 +50,12 @@
 
     "interface.new_game.title": "Новая игра",
     "interface.new_game.char_name_input": "Введите имя персонажа",
+    "interface.new_game.race_selector": "Выберите расу",
     "interface.new_game.new_game_button": "Начать игру",
+    "interface.new_game.race_info_text": "Раса: ",
+    "interface.new_game.race_name_text_not_selected": "[Не выбрана]",
+    "interface.new_game.panel_desc_title": "Описание",
+    "interface.new_game.panel_chars_title": "Начальные характеристики",
 
     "interface.settings.lang_settings.title": "Настройка локализации",
     "interface.settings.lang_settings.lang_selector": "Выберите язык"

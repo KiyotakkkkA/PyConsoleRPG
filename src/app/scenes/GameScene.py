@@ -79,6 +79,8 @@ class GameScene(Screen):
         self.control_activities.set_selection(0)
         self.inventory_table.set_active(False)
         
+        self.emit_event("panel_changed", None)
+        
     def to_main_panel(self):
         """Переключение активной корневой панели"""
         if not self.main_panel.selected and not self.action_panel.selected: return
@@ -90,6 +92,8 @@ class GameScene(Screen):
         self.control_activities.set_active(False)
         self.control_activities.flush_selection()
         self.inventory_table.set_active(True)
+        
+        self.emit_event("panel_changed", None)
         
     def set_control_panel(self): # Панель навигации
         control_panel_w = self.get_w() // 5
@@ -134,7 +138,12 @@ class GameScene(Screen):
         self.player_name_label = Text(self.player_name_addition.x + self.player_name_addition.width + 1, player_name_y, "Имя:", Color.WHITE, Color.RESET)
         self.player_name = Text(self.player_name_label.x + self.player_name_label.width + 1, player_name_y, "", Color.BRIGHT_YELLOW, Color.RESET)
         
-        player_level_y = player_name_y + 1
+        player_race_y = player_name_y + 1
+        self.player_race_addition = Text(self.player_panel.x + 2, player_race_y, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
+        self.player_race_label = Text(self.player_race_addition.x + self.player_race_addition.width + 1, player_race_y, "Раса:", Color.WHITE, Color.RESET)
+        self.player_race = Text(self.player_race_label.x + self.player_race_label.width + 1, player_race_y, "", Color.BRIGHT_YELLOW, Color.RESET)
+        
+        player_level_y = player_race_y + 1
         self.player_level_addition = Text(self.player_panel.x + 2, player_level_y, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
         self.player_level_label = Text(self.player_level_addition.x + self.player_level_addition.width + 1, player_level_y, "Уровень:", Color.WHITE, Color.RESET)
         self.player_level = Text(self.player_level_label.x + self.player_level_label.width + 1, player_level_y, "", Color.BRIGHT_YELLOW, Color.RESET)
@@ -172,6 +181,10 @@ class GameScene(Screen):
         self.player_panel.add_child(self.player_name_addition)
         self.player_panel.add_child(self.player_name_label)
         self.player_panel.add_child(self.player_name)
+        
+        self.player_panel.add_child(self.player_race_addition)
+        self.player_panel.add_child(self.player_race_label)
+        self.player_panel.add_child(self.player_race)
         
         self.player_panel.add_child(self.player_level_addition)
         self.player_panel.add_child(self.player_level_label)
@@ -361,7 +374,8 @@ class GameScene(Screen):
             self.relax_time.set_text("| ГОТОВ К ПЕРЕМЕЩЕНИЮ |")
         
         name_y = relax_time_y + 2
-        level_y = name_y + 2
+        race_y = name_y + 1
+        level_y = race_y + 2
         exp_y = level_y + 1
         health_y = exp_y + 2
         energy_y = health_y + 1
@@ -371,6 +385,11 @@ class GameScene(Screen):
         self.player_name_label.set_y(name_y)
         self.player_name.set_y(name_y)
         self.player_name.set_text(Game.player.name)
+        
+        self.player_race_addition.set_y(race_y)
+        self.player_race_label.set_y(race_y)
+        self.player_race.set_y(race_y)
+        self.player_race.set_text(self._locale_manager[f"races.{Game.player.race}.name"])
         
         self.player_level_addition.set_y(level_y)
         self.player_level_label.set_y(level_y)
@@ -499,7 +518,7 @@ class GameScene(Screen):
         self.tab2.add_child(self.player_multi_panel)
         
         self.characteristics_container.add_child(self.characteristics_panel)
-        
+    
         self.characteristics_panel.add_child(self.speed_characteristic_addition)
         self.characteristics_panel.add_child(self.speed_characteristic)
         self.characteristics_panel.add_child(self.speed_characteristic_value)
@@ -591,6 +610,7 @@ class GameScene(Screen):
         ])
         
         self.player_multi_panel.connect_to_tab(self.tab, 'player')
+        self.player_multi_panel.connect_to_panel(self.main_panel)
         
         self.add_child(self.control_panel)
         self.add_child(self.main_panel)
