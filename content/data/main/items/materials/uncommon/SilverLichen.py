@@ -15,3 +15,5 @@ class SilverLichen(Material):
         self.weight = 0.07
         
         self.rarity = Rarity.UNCOMMON
+        
+        self.respawn_time = 10

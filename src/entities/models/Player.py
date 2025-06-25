@@ -1,5 +1,6 @@
 from src.services.events import EventListener
 from src.entities.interfaces import Serializable, Computable
+import time
 
 class Player(EventListener, Computable, Serializable):
     def __init__(self):
@@ -87,6 +88,7 @@ class Player(EventListener, Computable, Serializable):
         
     def collect_resource(self, resource_id: str):
         from src.Game import Game
+        from src.services.backend.registers import RegistryItems
         """
         Сбор ресурсов
         
@@ -99,11 +101,22 @@ class Player(EventListener, Computable, Serializable):
         
         Game.game_state.loc_res_meta[self.current_location] = Game.game_state.loc_res_meta.get(self.current_location, {})
         Game.game_state.loc_res_meta[self.current_location][resource_id] = {
-            'amount': loc["resources"][resource_id]["amount"]
+            'amount': loc["resources"][resource_id]["amount"],
+        }
+        
+        if not Game.game_state.state['respawning_resources'].get(self.current_location):
+            Game.game_state.state['respawning_resources'][self.current_location] = {}
+            
+        Game.game_state.state['respawning_resources'][self.current_location][resource_id] = {
+            'location_id': self.current_location,
+            'resource_id': resource_id,
+            'amount_after_respawn': amount,
+            'respawn_time': RegistryItems.get_json_view()[resource_id]['respawn_time'],
+            'collected_time': time.time()
         }
         
         self._add_resource_to_inventory(resource_id, amount)
-        self.emit_event("player_collect_resource", {"resource_id": resource_id, "amount": amount})
+        self.emit_event("player_collect_resource", {"location_id": self.current_location, "resource_id": resource_id, "amount": amount})
         
     def _add_resource_to_inventory(self, resource_id: str, amount: int):
         self.inventory[resource_id] = {

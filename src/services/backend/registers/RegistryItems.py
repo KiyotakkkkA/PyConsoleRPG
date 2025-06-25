@@ -1,5 +1,5 @@
 from typing import List
-from src.entities.interfaces.game.Item import Item
+from src.entities.interfaces.game.Item import Item, ItemTypes
 from src.services.backend.managers import ContentManager
 import pkgutil
 import importlib
@@ -35,6 +35,9 @@ class RegistryItems:
                 "price": item.price,
                 "level_need": item.level_need
             }
+            
+            if item.type == ItemTypes.MATERIAL:
+                RegistryItems._json_view[item.id]["respawn_time"] = item.respawn_time
             
     @staticmethod
     def get_json_view():

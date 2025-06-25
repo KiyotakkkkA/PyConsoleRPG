@@ -13,3 +13,5 @@ class TheThorn(Material):
         
         self.rarity = Rarity.COMMON
         self.weight = 0.05
+        
+        self.respawn_time = 5

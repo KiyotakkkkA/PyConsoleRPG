@@ -30,6 +30,7 @@ class GameState(Serializable):
         }
         
         self.state = {
+            "respawning_resources": {},
             "current_relax_time": 0,
             "start_time": 0.0,
             "frame_count": 0,
@@ -187,15 +188,15 @@ class Game:
         return Game.GAME_WAS_LOADED_SUCCESSFULLY
     
     @classmethod
-    def time_count_with_fps(cls):
+    def time_count_with_fps(cls, counter_id: str):
         cls.game_state.state["frame_count"] += 1
         current_time = time.time()
         elapsed_time = current_time - cls.game_state.state["last_update_time"]
         
         cls.game_state.state["last_update_time"] = current_time
-        cls.game_state.state["current_relax_time"] -= elapsed_time
-        if cls.game_state.state["current_relax_time"] < 0:
-            cls.game_state.state["current_relax_time"] = 0
+        cls.game_state.state[counter_id] -= elapsed_time
+        if cls.game_state.state[counter_id] < 0:
+            cls.game_state.state[counter_id] = 0
     
     @classmethod
     def get_location_by_id(cls, location_id: str):

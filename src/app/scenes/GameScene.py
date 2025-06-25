@@ -262,6 +262,7 @@ class GameScene(Screen):
         resources = []
         gap = 1
         res = Game.game_state.computable["current_location_data"]()["resources"]
+        loc_id = Game.game_state.computable["current_location_data"]()["id"]
         player_level = Game.player.current_level
         
         for resource in res:
@@ -284,8 +285,13 @@ class GameScene(Screen):
             text_count = Text(text_name.x + text_name.width + 1, self.resources_panel.y + gap, f"[x{amount}]", Color.WHITE, Color.RESET)
             text_rarity = Text(text_count.x + text_count.width + 1, self.resources_panel.y + gap, f"[{res_data['rarity'].value[0]}]", res_data['rarity'].value[2], Color.RESET)
             
+            if Game.game_state.state['respawning_resources'].get(loc_id, {}).get(resource):
+                time_diff = Game.game_state.state['respawning_resources'][loc_id][resource]['respawn_time'] - (time.time() - Game.game_state.state['respawning_resources'][loc_id][resource]['collected_time'])
+                if time_diff <= 0:
+                    self.emit_event("resource_respawned", {"location_id": loc_id, "resource_id": resource})
+                
             if amount <= 0:
-                errors.append(Text(self.resources_panel.x + 1, self.resources_panel.y + gap + 1, "  " + "ЗАКОНЧИЛСЯ", Color.BRIGHT_RED, Color.RESET))
+                errors.append(Text(self.resources_panel.x + 1, self.resources_panel.y + gap + 1, "  " + f"ЗАКОНЧИЛСЯ - восстановится через {time_diff:.2f} сек.", Color.BRIGHT_RED, Color.RESET))
             
             if not reqs['level']['complete']():
                 errors.append(Text(self.resources_panel.x + 1, self.resources_panel.y + gap + 1, "  [!] " + reqs['level']['error'](), Color.BRIGHT_RED, Color.RESET))
@@ -428,7 +434,7 @@ class GameScene(Screen):
         self.player_astrum_max.set_x(self.player_astrum.x + self.player_astrum.width)
         self.player_astrum_max.set_text(f"/ {Game.player.max_astrum}")
         
-        Game.time_count_with_fps()
+        Game.time_count_with_fps('current_relax_time')
         
     def set_tab_location(self): # Вкладка локации
         name_location_y = self.tab1.y + 3
@@ -637,6 +643,7 @@ class GameScene(Screen):
         
         self.on_event("player_move", self.update_location_info)
         self.on_event("player_collect_resource", self.update_inventory_info)
+        self.on_event("resource_respawned", self.update_resources_count)
         
         self.tab.disable_tab(2)
         self.tab.disable_tab(4)
@@ -651,6 +658,18 @@ class GameScene(Screen):
         from src.Game import Game
         
         Game.player.move_to_location(Game.player.current_location)
+        
+    def update_resources_count(self, data=None):
+        from src.Game import Game
+        
+        loc = Game.game_state.state['respawning_resources'][data['location_id']][data['resource_id']]
+        Game.game_state.loc_res_meta[data['location_id']][data['resource_id']]['amount'] = loc['amount_after_respawn']
+        Game.get_location_by_id(data['location_id'])['resources'][data['resource_id']]['amount'] = loc['amount_after_respawn']
+        
+        del Game.game_state.state['respawning_resources'][data['location_id']][data['resource_id']]
+        
+        self.update_location_info(None)
+        
         
     def update_location_info(self, data):
         from src.Game import Game
@@ -724,8 +743,13 @@ class GameScene(Screen):
         
                 
     def update(self):
+        from src.Game import Game
+        
         self.set_player_panel()
         self.update_player_characteristics_info()
+        
+        if Game.game_state.state['respawning_resources']:
+            self.set_resources_main()
         
         if self.first_mounted < 2:
             self.first_mounted += 1
