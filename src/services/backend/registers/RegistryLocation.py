@@ -1,6 +1,6 @@
 from typing import List
-import src.entities.models.locations as loc_package
 from src.entities.interfaces.game import Location
+from src.services.backend.managers import ContentManager
 import pkgutil
 import importlib
 import inspect
@@ -9,15 +9,18 @@ class RegistryLocation:
     """
     Регистратор локаций
     """
-    locations: List[Location] = []
-
-    for finder, name, ispkg in pkgutil.walk_packages(loc_package.__path__, loc_package.__name__ + "."):
-        module = importlib.import_module(name)
-        for _, obj in inspect.getmembers(module, inspect.isclass):
-            if issubclass(obj, Location) and obj is not Location:
-                locations.append(obj())
-
+    _content_manager = ContentManager().get_instance()
     _json_view = {}
+    
+    locations: List[Location] = []
+    locations_dir = _content_manager.get_modules("locations")
+    
+    for locations_dir in locations_dir:
+        for finder, name, ispkg in pkgutil.walk_packages(locations_dir.__path__, locations_dir.__name__ + "."):
+            module = importlib.import_module(name)
+            for _, obj in inspect.getmembers(module, inspect.isclass):
+                if issubclass(obj, Location) and obj is not Location:
+                    locations.append(obj())
         
     @staticmethod
     def load_to_json():

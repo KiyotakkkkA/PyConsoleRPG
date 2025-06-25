@@ -1,6 +1,6 @@
 from typing import List
-import src.entities.models.regions as reg_package
 from src.entities.interfaces.game import Region
+from src.services.backend.managers import ContentManager
 import pkgutil
 import importlib
 import inspect
@@ -10,15 +10,18 @@ class RegistryRegion:
     Регистратор регионов
     """
     
-    regions: List[Region] = []
-    
-    for finder, name, ispkg in pkgutil.walk_packages(reg_package.__path__, reg_package.__name__ + "."):
-        module = importlib.import_module(name)
-        for _, obj in inspect.getmembers(module, inspect.isclass):
-            if issubclass(obj, Region) and obj is not Region:
-                regions.append(obj())
-    
+    _content_manager = ContentManager().get_instance()
     _json_view = {}
+    
+    regions: List[Region] = []
+    regions_dir = _content_manager.get_modules("regions")
+    
+    for regions_dir in regions_dir:
+        for finder, name, ispkg in pkgutil.walk_packages(regions_dir.__path__, regions_dir.__name__ + "."):
+            module = importlib.import_module(name)
+            for _, obj in inspect.getmembers(module, inspect.isclass):
+                if issubclass(obj, Region) and obj is not Region:
+                    regions.append(obj())
         
     @staticmethod
     def load_to_json():

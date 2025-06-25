@@ -50,6 +50,7 @@ class Panel(Component):
         self.reactive('auto_resize', auto_resize)
         
         self.computed('true_width', lambda: max(len(self.title) + 2, self.width - 2), ['title', 'width'])
+        self.computed('current_color', lambda: self.border_color_selected if self.selected else self.border_color, ['selected'])
         
     def set_children(self, children: list['Component']):
         """
@@ -92,17 +93,13 @@ class Panel(Component):
             screen: Экран, на который производится отрисовка
         """
         self.calculate()
-        
-        color = self.border_color
-        if self.selected:
-            color = self.border_color_selected
             
-        screen.draw_text(self.x, self.y, "{}{}{}".format(Symbols.BORDERS.TOP_LEFT, Symbols.BORDERS.TOP * self.true_width, Symbols.BORDERS.TOP_RIGHT), color, Color.RESET)
-        screen.draw_text(self.x, self.y + self.height - 1, "{}{}{}".format(Symbols.BORDERS.BOTTOM_LEFT, Symbols.BORDERS.BOTTOM * self.true_width, Symbols.BORDERS.BOTTOM_RIGHT), color, Color.RESET)
+        screen.draw_text(self.x, self.y, "{}{}{}".format(Symbols.BORDERS.TOP_LEFT, Symbols.BORDERS.TOP * self.true_width, Symbols.BORDERS.TOP_RIGHT), self.current_color, Color.RESET)
+        screen.draw_text(self.x, self.y + self.height - 1, "{}{}{}".format(Symbols.BORDERS.BOTTOM_LEFT, Symbols.BORDERS.BOTTOM * self.true_width, Symbols.BORDERS.BOTTOM_RIGHT), self.current_color, Color.RESET)
         for cy in range(self.y + 1, self.y + self.height - 1):
-            screen.draw_text(self.x, cy, Symbols.BORDERS.LEFT, color, Color.RESET)
+            screen.draw_text(self.x, cy, Symbols.BORDERS.LEFT, self.current_color, Color.RESET)
             screen.draw_text(self.x + 1, cy, "{}".format(self.filler * self.true_width), self.filler_color, Color.RESET)
-            screen.draw_text(self.x + self.true_width + 1, cy, Symbols.BORDERS.RIGHT, color, Color.RESET)
+            screen.draw_text(self.x + self.true_width + 1, cy, Symbols.BORDERS.RIGHT, self.current_color, Color.RESET)
         screen.draw_text(self.title_x, self.y, self.title, self.title_color, Color.RESET)
             
         for child in self.children:

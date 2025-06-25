@@ -1,6 +1,6 @@
 from typing import List
-import src.entities.models.races as race_package
 from src.entities.interfaces.game import Race
+from src.services.backend.managers import ContentManager
 from src.services.backend.managers import LocaleManager
 import pkgutil
 import importlib
@@ -11,16 +11,19 @@ class RegistryRace:
     Регистратор рас
     """
     
+    _content_manager = ContentManager().get_instance()
+    _json_view = {}
+    
     races: List[Race] = []
     locale_manager = LocaleManager()
+    races_dir = _content_manager.get_modules("races")
     
-    for finder, name, ispkg in pkgutil.walk_packages(race_package.__path__, race_package.__name__ + "."):
-        module = importlib.import_module(name)
-        for _, obj in inspect.getmembers(module, inspect.isclass):
-            if issubclass(obj, Race) and obj is not Race:
-                races.append(obj())
-    
-    _json_view = {}
+    for race_dir in races_dir:
+        for finder, name, ispkg in pkgutil.walk_packages(race_dir.__path__, race_dir.__name__ + "."):
+            module = importlib.import_module(name)
+            for _, obj in inspect.getmembers(module, inspect.isclass):
+                if issubclass(obj, Race) and obj is not Race:
+                    races.append(obj())
         
     @staticmethod
     def load_to_json():

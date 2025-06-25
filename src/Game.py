@@ -5,9 +5,9 @@ from src.entities.interfaces import Serializable
 from src.app.scenes import MainScene, \
     GameScene, SettingsScene, NewGameScene, \
     LoadGameScene, ControlsScene, AudioSettingScene, \
-    LangSettingScene
+    LangSettingScene, ModsScene
 from src.services.frontend.core import ScreenManager, AudioManager
-from src.services.backend.managers import GlobalMetadataManager, LocaleManager
+from src.services.backend.managers import GlobalMetadataManager, LocaleManager, ContentManager
 from src.config.Config import Config
 import time
 import json
@@ -54,6 +54,7 @@ class Game:
     CURRENT_LOADING_PLAYER = None
     
     # Менеджеры
+    content_manager = ContentManager().get_instance()
     screen_manager = ScreenManager().get_instance()
     audio_manager = AudioManager().get_instance()
     global_metadata_manager = GlobalMetadataManager().get_instance()
@@ -97,6 +98,10 @@ class Game:
                  },
         "load_game": {
                  "screen": LoadGameScene,
+                 "bg_music": ""
+                 },
+        "mods": {
+                 "screen": ModsScene,
                  "bg_music": ""
                  },
         "audio_settings": {

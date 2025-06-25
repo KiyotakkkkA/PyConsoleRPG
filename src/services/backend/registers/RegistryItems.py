@@ -1,6 +1,6 @@
 from typing import List
-import src.entities.models.items as items_package
 from src.entities.interfaces.game.Item import Item
+from src.services.backend.managers import ContentManager
 import pkgutil
 import importlib
 import inspect
@@ -10,15 +10,18 @@ class RegistryItems:
     Регистратор предметов
     """
     
-    items: List[Item] = []
-    
-    for finder, name, ispkg in pkgutil.walk_packages(items_package.__path__, items_package.__name__ + "."):
-        module = importlib.import_module(name)
-        for _, obj in inspect.getmembers(module, inspect.isclass):
-            if issubclass(obj, Item) and obj is not Item:
-                items.append(obj())
-    
+    _content_manager = ContentManager().get_instance()
     _json_view = {}
+    
+    items: List[Item] = []
+    items_dirs = _content_manager.get_modules("items")
+    
+    for items_dir in items_dirs:
+        for finder, name, ispkg in pkgutil.walk_packages(items_dir.__path__, items_dir.__name__ + "."):
+            module = importlib.import_module(name)
+            for _, obj in inspect.getmembers(module, inspect.isclass):
+                if issubclass(obj, Item) and obj is not Item:
+                    items.append(obj())
         
     @staticmethod
     def load_to_json():

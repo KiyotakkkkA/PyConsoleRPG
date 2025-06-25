@@ -42,6 +42,10 @@ class MainScene(Screen):
     @staticmethod
     def load_game():
         ScreenManager.navigate_to_screen("load_game")
+        
+    @staticmethod
+    def mods():
+        ScreenManager.navigate_to_screen("mods")
     
     @staticmethod
     def exit():
@@ -78,6 +82,7 @@ class MainScene(Screen):
             ((self._locale_manager['interface.main_menu.load_game'], Color.WHITE), Keys.L, lambda: MainScene.load_game()),
             ((self._locale_manager['interface.main_menu.settings'], Color.WHITE), Keys.S, lambda: MainScene.settings()),
             ((self._locale_manager['interface.main_menu.controls'], Color.WHITE), Keys.C, lambda: MainScene.controls()),
+            ((self._locale_manager['interface.main_menu.mods'], Color.WHITE), Keys.M, lambda: MainScene.mods()),
             ((self._locale_manager['interface.main_menu.exit'], Color.WHITE), Keys.Q, lambda: MainScene.exit()),
         ])
         

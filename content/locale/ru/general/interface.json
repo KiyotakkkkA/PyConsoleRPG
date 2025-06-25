@@ -33,6 +33,7 @@
     "interface.main_menu.load_game": "Загрузка игры",
     "interface.main_menu.settings": "Настройки",
     "interface.main_menu.controls": "Управление",
+    "interface.main_menu.mods": "Модификации",
     "interface.main_menu.exit": "Выход",
 
     "interface.settings.title": "Настройки",
@@ -56,6 +57,14 @@
     "interface.new_game.race_name_text_not_selected": "[Не выбрана]",
     "interface.new_game.panel_desc_title": "Описание",
     "interface.new_game.panel_chars_title": "Начальные характеристики",
+
+    "interface.mods.title": "Модификации",
+    "interface.mods.table.mod_name": "Название",
+    "interface.mods.table.mod_author": "Автор",
+    "interface.mods.table.mod_version": "Версия",
+    "interface.mods.table.mod_status": "Статус",
+    "interface.mods.table.mod_status.enabled": "Включено",
+    "interface.mods.table.mod_status.disabled": "Выключено",
 
     "interface.settings.lang_settings.title": "Настройка локализации",
     "interface.settings.lang_settings.lang_selector": "Выберите язык"

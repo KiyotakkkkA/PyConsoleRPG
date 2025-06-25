@@ -6,6 +6,7 @@ class Config:
     BG_MUSIC_DIR = "assets/audio/bg_music"
     SAVES_DIR = "saves"
     LOCALE_DIR = "content/locale"
+    DATA_DIR = "content/data"
     
     # файлы
     GLOBAL_META_FILE = "global.json"

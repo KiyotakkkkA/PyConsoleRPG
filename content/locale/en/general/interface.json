@@ -33,6 +33,7 @@
     "interface.main_menu.load_game": "Load game",
     "interface.main_menu.settings": "Settings",
     "interface.main_menu.controls": "Controls",
+    "interface.main_menu.mods": "Mods",
     "interface.main_menu.exit": "Exit",
 
     "interface.settings.title": "Settings",
@@ -56,6 +57,14 @@
     "interface.new_game.race_name_text_not_selected": "[Not selected]",
     "interface.new_game.panel_desc_title": "Description",
     "interface.new_game.panel_chars_title": "Initial characteristics",
+
+    "interface.mods.title": "Mods",
+    "interface.mods.table.mod_name": "Name",
+    "interface.mods.table.mod_author": "Author",
+    "interface.mods.table.mod_version": "Version",
+    "interface.mods.table.mod_status": "Status",
+    "interface.mods.table.mod_status.enabled": "Enabled",
+    "interface.mods.table.mod_status.disabled": "Disabled",
 
     "interface.settings.lang_settings.title": "Language settings",
     "interface.settings.lang_settings.lang_selector": "Choose language"
