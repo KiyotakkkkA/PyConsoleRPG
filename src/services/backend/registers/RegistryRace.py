@@ -24,7 +24,7 @@ class RegistryRace:
             for _, obj in inspect.getmembers(module, inspect.isclass):
                 if issubclass(obj, Race) and obj is not Race:
                     races.append(obj())
-        
+    
     @staticmethod
     def load_to_json():
         for race in RegistryRace.races:
