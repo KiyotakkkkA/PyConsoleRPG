@@ -54,12 +54,16 @@ class Panel(Component):
         
     def set_children(self, children: list['Component']):
         """
-        Установка дочерних компонентов
-        
+        Установка дочерних компонентов.
         Args:
-            children: Список компонентов, которые будут добавлены
+            children: Список новых компонентов, которые нужно установить.
         """
-        self.children = []
+        for child in self.children:
+            child.parent = None
+        
+        self.children.clear()
+        self._components.clear()
+        
         self.add_children(children)
     
     def resize(self):

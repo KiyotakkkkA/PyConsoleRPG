@@ -1,6 +1,7 @@
 import msvcrt
 from enum import Enum
 from typing import Dict, Callable, Optional, List
+import weakref
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -95,8 +96,8 @@ class KeyListener:
         Инициализация слушателя клавиш
         """
         self.key_bindings: Dict[int, List[Callable]] = {}
-        self.components: List['Component'] = []
-        self.screens: List['Screen'] = []
+        self.components: "weakref.WeakSet['Component']" = weakref.WeakSet()
+        self.screens: "weakref.WeakSet['Screen']" = weakref.WeakSet()
         self.last_key: Optional[int] = None
         self.is_special_key = False
         self._cache = {x.value: x for x in Keys}
@@ -131,8 +132,7 @@ class KeyListener:
         Args:
             component: Компонент, который будет получать события
         """
-        if component not in self.components:
-            self.components.append(component)
+        self.components.add(component)
     
     def unregister_component(self, component: 'Component') -> None:
         """
@@ -141,8 +141,7 @@ class KeyListener:
         Args:
             component: Компонент, который больше не будет получать события
         """
-        if component in self.components:
-            self.components.remove(component)
+        self.components.discard(component)
     
     def register_screen(self, screen: 'Screen') -> None:
         """
@@ -151,8 +150,7 @@ class KeyListener:
         Args:
             screen: Экран, который будет получать события
         """
-        if screen not in self.screens:
-            self.screens.append(screen)
+        self.screens.add(screen)
     
     def unregister_screen(self, screen: 'Screen') -> None:
         """
@@ -161,8 +159,7 @@ class KeyListener:
         Args:
             screen: Экран, который больше не будет получать события
         """
-        if screen in self.screens:
-            self.screens.remove(screen)
+        self.screens.discard(screen)
     
     def check_key(self) -> Optional[Keys]:
         """
