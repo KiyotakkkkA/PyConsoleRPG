@@ -133,82 +133,100 @@ class GameScene(Screen):
         
         self.relax_time = Text(self.player_panel.x + 2, self.player_panel.height - 1, "Отдых {}", Color.BRIGHT_BLACK, Color.RESET)
         
-        player_name_y = self.player_panel.y + 1
-        self.player_name_addition = Text(self.player_panel.x + 2, player_name_y, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
-        self.player_name_label = Text(self.player_name_addition.x + self.player_name_addition.width + 1, player_name_y, "Имя:", Color.WHITE, Color.RESET)
-        self.player_name = Text(self.player_name_label.x + self.player_name_label.width + 1, player_name_y, "", Color.BRIGHT_YELLOW, Color.RESET)
+        self._stats_general = [
+            {
+                'id': 'name',
+                'label': "Имя: ",
+                'value': "",
+                'description': "",
+                'color': Color.BRIGHT_YELLOW
+            },
+            {
+                'id': 'race',
+                'label': "Раса: ",
+                'value': "",
+                'description': "",
+                'color': Color.BRIGHT_YELLOW
+            }
+        ]
         
-        player_race_y = player_name_y + 1
-        self.player_race_addition = Text(self.player_panel.x + 2, player_race_y, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
-        self.player_race_label = Text(self.player_race_addition.x + self.player_race_addition.width + 1, player_race_y, "Раса:", Color.WHITE, Color.RESET)
-        self.player_race = Text(self.player_race_label.x + self.player_race_label.width + 1, player_race_y, "", Color.BRIGHT_YELLOW, Color.RESET)
+        self._stats_level = [
+            {
+                'id': 'level',
+                'label': "Уровень: ",
+                'value': "",
+                'description': "",
+                'color': Color.BRIGHT_YELLOW
+            },
+            {
+                'id': 'current_exp',
+                'label': "До повышения: ",
+                'value': "",
+                'description': "",
+                'color': Color.BRIGHT_YELLOW
+            }
+        ]
         
-        player_level_y = player_race_y + 1
-        self.player_level_addition = Text(self.player_panel.x + 2, player_level_y, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
-        self.player_level_label = Text(self.player_level_addition.x + self.player_level_addition.width + 1, player_level_y, "Уровень:", Color.WHITE, Color.RESET)
-        self.player_level = Text(self.player_level_label.x + self.player_level_label.width + 1, player_level_y, "", Color.BRIGHT_YELLOW, Color.RESET)
+        self._stats_indicators = [
+            {
+                'id': 'health',
+                'label': "Здоровье: ",
+                'value': "",
+                'color': Color.BRIGHT_RED
+            },
+            {
+                'id': 'energy',
+                'label': "Энергия: ",
+                'value': "",
+                'color': Color.BRIGHT_GREEN
+            },
+            {
+                'id': 'astrum',
+                'label': "Аструм: ",
+                'value': "",
+                'color': Color.CYAN
+            }
+        ]
         
-        player_exp_to_next_level_y = player_level_y + 1
-        self.player_exp_to_next_level_addition = Text(self.player_panel.x + 2, player_exp_to_next_level_y, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
-        self.player_exp_to_next_level_label = Text(self.player_exp_to_next_level_addition.x + self.player_exp_to_next_level_addition.width + 1, player_exp_to_next_level_y, "До повышения:", Color.WHITE, Color.RESET)
-        self.player_current_exp = Text(self.player_exp_to_next_level_label.x + self.player_exp_to_next_level_label.width + 1, player_exp_to_next_level_y, "", Color.BRIGHT_YELLOW, Color.RESET)
-        self.player_exp_to_next_level = Text(self.player_current_exp.x + self.player_current_exp.width + 1, player_exp_to_next_level_y, "", Color.BRIGHT_YELLOW, Color.RESET)
+        y = self.player_panel.y + 1
+        for stat in self._stats_general:
+            setattr(self, f"player_{stat['id']}_addition", Text(self.player_panel.x + 2, y, "[*]", Color.BRIGHT_MAGENTA, Color.RESET))
+            setattr(self, f"player_{stat['id']}_label", Text(getattr(self, f"player_{stat['id']}_addition").x + getattr(self, f"player_{stat['id']}_addition").width + 1, y, stat['label'], Color.WHITE, Color.RESET))
+            setattr(self, f"player_{stat['id']}", Text(getattr(self, f"player_{stat['id']}_label").x + getattr(self, f"player_{stat['id']}_label").width + 1, y, "", stat['color'], Color.RESET))
+            
+            self.player_panel.add_child(getattr(self, f"player_{stat['id']}_addition"))
+            self.player_panel.add_child(getattr(self, f"player_{stat['id']}_label"))
+            self.player_panel.add_child(getattr(self, f"player_{stat['id']}"))
+            
+            y += 2
+            
+        for stat in self._stats_level:
+            setattr(self, f"player_{stat['id']}_addition", Text(self.player_panel.x + 2, y, "[*]", Color.BRIGHT_MAGENTA, Color.RESET))
+            setattr(self, f"player_{stat['id']}_label", Text(getattr(self, f"player_{stat['id']}_addition").x + getattr(self, f"player_{stat['id']}_addition").width + 1, y, stat['label'], Color.WHITE, Color.RESET))
+            setattr(self, f"player_{stat['id']}", Text(getattr(self, f"player_{stat['id']}_label").x + getattr(self, f"player_{stat['id']}_label").width + 1, y, "", stat['color'], Color.RESET))
+            
+            self.player_panel.add_child(getattr(self, f"player_{stat['id']}_addition"))
+            self.player_panel.add_child(getattr(self, f"player_{stat['id']}_label"))
+            self.player_panel.add_child(getattr(self, f"player_{stat['id']}"))
+            
+            y += 2
         
-        player_health_y = player_exp_to_next_level_y + 1
-        self.player_health_addition = Text(self.player_panel.x + 2, player_health_y, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
-        self.player_health_label = Text(self.player_health_addition.x + self.player_health_addition.width + 1, player_health_y, "Здоровье:", Color.WHITE, Color.RESET)
-        self.player_health_max = Text(self.player_health_label.x + self.player_health_label.width + 1, player_health_y, "", Color.BRIGHT_RED, Color.RESET)
-        self.player_health = Text(self.player_health_max.x + self.player_health_max.width + 1, player_health_y, "", Color.BRIGHT_RED, Color.RESET)
-        
-        player_energy_y = player_health_y + 1
-        self.player_energy_addition = Text(self.player_panel.x + 2, player_energy_y, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
-        self.player_energy_label = Text(self.player_energy_addition.x + self.player_energy_addition.width + 1, player_energy_y, "Энергия:", Color.WHITE, Color.RESET)
-        self.player_energy_max = Text(self.player_energy_label.x + self.player_energy_label.width + 1, player_energy_y, "", Color.BRIGHT_GREEN, Color.RESET)
-        self.player_energy = Text(self.player_energy_max.x + self.player_energy_max.width + 1, player_energy_y, "", Color.BRIGHT_GREEN, Color.RESET)
-        
-        player_astrum_y = player_energy_y + 1
-        self.player_astrum_addition = Text(self.player_panel.x + 2, player_astrum_y, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
-        self.player_astrum_label = Text(self.player_astrum_addition.x + self.player_astrum_addition.width + 1, player_astrum_y, "Аструм:", Color.WHITE, Color.RESET)
-        self.player_astrum_max = Text(self.player_astrum_label.x + self.player_astrum_label.width + 1, player_astrum_y, "", Color.BRIGHT_BLUE, Color.RESET)
-        self.player_astrum = Text(self.player_astrum_max.x + self.player_astrum_max.width + 1, player_astrum_y, "", Color.BRIGHT_BLUE, Color.RESET)
+        for stat in self._stats_indicators:
+            setattr(self, f"player_{stat['id']}_addition", Text(self.player_panel.x + 2, y, "[*]", Color.BRIGHT_MAGENTA, Color.RESET))
+            setattr(self, f"player_{stat['id']}_label", Text(getattr(self, f"player_{stat['id']}_addition").x + getattr(self, f"player_{stat['id']}_addition").width + 1, y, stat['label'], Color.WHITE, Color.RESET))
+            setattr(self, f"player_{stat['id']}", Text(getattr(self, f"player_{stat['id']}_label").x + getattr(self, f"player_{stat['id']}_label").width + 1, y, "", stat['color'], Color.RESET))
+            
+            self.player_panel.add_child(getattr(self, f"player_{stat['id']}_addition"))
+            self.player_panel.add_child(getattr(self, f"player_{stat['id']}_label"))
+            self.player_panel.add_child(getattr(self, f"player_{stat['id']}"))
+            
+            y += 2
         
         self.control_panel.add_child(self.action_panel)
         self.action_panel.add_child(self.control_activities)
         self.control_panel.add_child(self.player_panel)
         
         self.player_panel.add_child(self.relax_time)
-        
-        self.player_panel.add_child(self.player_name_addition)
-        self.player_panel.add_child(self.player_name_label)
-        self.player_panel.add_child(self.player_name)
-        
-        self.player_panel.add_child(self.player_race_addition)
-        self.player_panel.add_child(self.player_race_label)
-        self.player_panel.add_child(self.player_race)
-        
-        self.player_panel.add_child(self.player_level_addition)
-        self.player_panel.add_child(self.player_level_label)
-        self.player_panel.add_child(self.player_level)
-        
-        self.player_panel.add_child(self.player_exp_to_next_level_addition)
-        self.player_panel.add_child(self.player_exp_to_next_level_label)
-        self.player_panel.add_child(self.player_current_exp)
-        self.player_panel.add_child(self.player_exp_to_next_level)
-        
-        self.player_panel.add_child(self.player_health_addition)
-        self.player_panel.add_child(self.player_health_label)
-        self.player_panel.add_child(self.player_health_max)
-        self.player_panel.add_child(self.player_health)
-        
-        self.player_panel.add_child(self.player_energy_addition)
-        self.player_panel.add_child(self.player_energy_label)
-        self.player_panel.add_child(self.player_energy_max)
-        self.player_panel.add_child(self.player_energy)
-        
-        self.player_panel.add_child(self.player_astrum_addition)
-        self.player_panel.add_child(self.player_astrum_label)
-        self.player_panel.add_child(self.player_astrum_max)
-        self.player_panel.add_child(self.player_astrum)
         
     def set_main_panel(self): # Основная панель
         main_panel_w = self.get_w() * 4 // 5
@@ -402,37 +420,25 @@ class GameScene(Screen):
         self.player_level.set_y(level_y)
         self.player_level.set_text(f"{Game.player.current_level}")
         
-        self.player_exp_to_next_level_addition.set_y(exp_y)
-        self.player_exp_to_next_level_label.set_y(exp_y)
+        self.player_current_exp_addition.set_y(exp_y)
+        self.player_current_exp_label.set_y(exp_y)
         self.player_current_exp.set_y(exp_y)
-        self.player_current_exp.set_text(f"{Game.player.current_exp}")
-        self.player_exp_to_next_level.set_y(exp_y)
-        self.player_exp_to_next_level.set_x(self.player_current_exp.x + self.player_current_exp.width)
-        self.player_exp_to_next_level.set_text(f"/ {Game.player.exp_to_next_level}")
+        self.player_current_exp.set_text(f"{Game.player.current_exp} / {Game.player.exp_to_next_level}")
         
         self.player_health_addition.set_y(health_y)
         self.player_health_label.set_y(health_y)
-        self.player_health_max.set_y(health_y)
         self.player_health.set_y(health_y)
-        self.player_health.set_text(f"{Game.player.health}")
-        self.player_health_max.set_x(self.player_health.x + self.player_health.width)
-        self.player_health_max.set_text(f"/ {Game.player.max_health}")
+        self.player_health.set_text(f"{Game.player.health} / {Game.player.max_health}")
         
         self.player_energy_addition.set_y(energy_y)
         self.player_energy_label.set_y(energy_y)
-        self.player_energy_max.set_y(energy_y)
         self.player_energy.set_y(energy_y)
-        self.player_energy.set_text(f"{Game.player.energy}")
-        self.player_energy_max.set_x(self.player_energy.x + self.player_energy.width)
-        self.player_energy_max.set_text(f"/ {Game.player.max_energy}")
+        self.player_energy.set_text(f"{Game.player.energy} / {Game.player.max_energy}")
         
         self.player_astrum_addition.set_y(astrum_y)
         self.player_astrum_label.set_y(astrum_y)
-        self.player_astrum_max.set_y(astrum_y)
         self.player_astrum.set_y(astrum_y)
-        self.player_astrum.set_text(f"{Game.player.astrum}")
-        self.player_astrum_max.set_x(self.player_astrum.x + self.player_astrum.width)
-        self.player_astrum_max.set_text(f"/ {Game.player.max_astrum}")
+        self.player_astrum.set_text(f"{Game.player.astrum} / {Game.player.max_astrum}")
         
         Game.time_count_with_fps('current_relax_time')
         
@@ -501,49 +507,46 @@ class GameScene(Screen):
                           border_color_selected=Color.BRIGHT_BLACK,
                           title_color=Color.YELLOW)
         
-        self.speed_characteristic_addition = Text(self.characteristics_panel.x + 2, self.characteristics_panel.y + 2, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
-        self.speed_characteristic = Text(self.speed_characteristic_addition.x + self.speed_characteristic_addition.width + 1, self.characteristics_panel.y + 2, "Скорость: ", Color.WHITE, Color.RESET)
-        self.speed_characteristic_value = Text(self.speed_characteristic.x + self.speed_characteristic.width + 1, self.speed_characteristic.y, "", Color.BRIGHT_YELLOW, Color.RESET)
-        self.speed_description = Text(self.speed_characteristic_addition.x, self.speed_characteristic_value.y + 1, "- Увеличение этого параметра\nуменьшает время перезарядки перемещения", Color.BRIGHT_BLACK, Color.RESET)
+        self._chars = [
+            {
+                'id': 'speed',
+                'label': "Скорость: ",
+                'desc': "- Увеличение этого параметра\nуменьшает время перезарядки перемещения"
+            },
+            {
+                'id': 'constitution',
+                'label': "Телосложение: ",
+                'desc': "- Увеличение этого параметра\nувеличивает максимальное здоровье"
+            },
+            {
+                'id': 'endurance',
+                'label': "Выносливость: ",
+                'desc': "- Увеличение этого параметра\nувеличивает максимальное энергии"
+            },
+            {
+                'id': 'intelligence',
+                'label': "Интеллект: ",
+                'desc': "- Увеличение этого параметра\nувеличивает максимальный запас аструма\n(астрального вещества,\nнеобходимого для сотворения заклинаний)"
+            }
+        ]
         
-        self.constitution_characteristic_addition = Text(self.characteristics_panel.x + 2, self.speed_description.y + 2, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
-        self.constitution_characteristic = Text(self.constitution_characteristic_addition.x + self.constitution_characteristic_addition.width + 1, self.speed_description.y + 2, "Телосложение: ", Color.WHITE, Color.RESET)
-        self.constitution_characteristic_value = Text(self.constitution_characteristic.x + self.constitution_characteristic.width + 1, self.constitution_characteristic.y, "", Color.BRIGHT_YELLOW, Color.RESET)
-        self.constitution_description = Text(self.constitution_characteristic_addition.x, self.constitution_characteristic_value.y + 1, "- Увеличение этого параметра\nувеличивает максимальное здоровье", Color.BRIGHT_BLACK, Color.RESET)
-        
-        self.endurance_characteristic_addition = Text(self.characteristics_panel.x + 2, self.constitution_description.y + 2, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
-        self.endurance_characteristic = Text(self.endurance_characteristic_addition.x + self.endurance_characteristic_addition.width + 1, self.constitution_description.y + 2, "Выносливость: ", Color.WHITE, Color.RESET)
-        self.endurance_characteristic_value = Text(self.endurance_characteristic.x + self.endurance_characteristic.width + 1, self.endurance_characteristic.y, "", Color.BRIGHT_YELLOW, Color.RESET)
-        self.endurance_description = Text(self.endurance_characteristic_addition.x, self.endurance_characteristic_value.y + 1, "- Увеличение этого параметра\nувеличивает максимальную энергию", Color.BRIGHT_BLACK, Color.RESET)
-        
-        self.intelligence_characteristic_addition = Text(self.characteristics_panel.x + 2, self.endurance_description.y + 2, "[*]", Color.BRIGHT_MAGENTA, Color.RESET)
-        self.intelligence_characteristic = Text(self.intelligence_characteristic_addition.x + self.intelligence_characteristic_addition.width + 1, self.endurance_description.y + 2, "Интеллект: ", Color.WHITE, Color.RESET)
-        self.intelligence_characteristic_value = Text(self.intelligence_characteristic.x + self.intelligence_characteristic.width + 1, self.intelligence_characteristic.y, "", Color.BRIGHT_YELLOW, Color.RESET)
-        self.intelligence_description = Text(self.intelligence_characteristic_addition.x, self.intelligence_characteristic_value.y + 1, "- Увеличение этого параметра\nувеличивает максимальный запас аструма\n(астрального вещества,\nнеобходимого для сотворения заклинаний)", Color.BRIGHT_BLACK, Color.RESET)
+        y = self.characteristics_panel.y + 2
+        for i, char in enumerate(self._chars):
+            setattr(self, f"{char['id']}_characteristic_addition", Text(self.characteristics_panel.x + 2, y, "[*]", Color.BRIGHT_MAGENTA, Color.RESET))
+            setattr(self, f"{char['id']}_characteristic", Text(getattr(self, f"{char['id']}_characteristic_addition").x + getattr(self, f"{char['id']}_characteristic_addition").width + 1, y, char['label'], Color.WHITE, Color.RESET))
+            setattr(self, f"{char['id']}_characteristic_value", Text(getattr(self, f"{char['id']}_characteristic").x + getattr(self, f"{char['id']}_characteristic").width + 2, y, "", Color.BRIGHT_YELLOW, Color.RESET))
+            setattr(self, f"{char['id']}_description", Text(self.speed_characteristic_addition.x, y + 1, char['desc'], Color.BRIGHT_BLACK, Color.RESET))
+            
+            self.characteristics_panel.add_child(getattr(self, f"{char['id']}_characteristic_addition"))
+            self.characteristics_panel.add_child(getattr(self, f"{char['id']}_characteristic"))
+            self.characteristics_panel.add_child(getattr(self, f"{char['id']}_characteristic_value"))
+            self.characteristics_panel.add_child(getattr(self, f"{char['id']}_description"))
+            
+            y += getattr(self, f"{char['id']}_description").height + 1
         
         self.tab2.add_child(self.player_multi_panel)
         
         self.characteristics_container.add_child(self.characteristics_panel)
-    
-        self.characteristics_panel.add_child(self.speed_characteristic_addition)
-        self.characteristics_panel.add_child(self.speed_characteristic)
-        self.characteristics_panel.add_child(self.speed_characteristic_value)
-        self.characteristics_panel.add_child(self.speed_description)
-        
-        self.characteristics_panel.add_child(self.constitution_characteristic_addition)
-        self.characteristics_panel.add_child(self.constitution_characteristic)
-        self.characteristics_panel.add_child(self.constitution_characteristic_value)
-        self.characteristics_panel.add_child(self.constitution_description)
-        
-        self.characteristics_panel.add_child(self.endurance_characteristic_addition)
-        self.characteristics_panel.add_child(self.endurance_characteristic)
-        self.characteristics_panel.add_child(self.endurance_characteristic_value)
-        self.characteristics_panel.add_child(self.endurance_description)
-        
-        self.characteristics_panel.add_child(self.intelligence_characteristic_addition)
-        self.characteristics_panel.add_child(self.intelligence_characteristic)
-        self.characteristics_panel.add_child(self.intelligence_characteristic_value)
-        self.characteristics_panel.add_child(self.intelligence_description)
         
         self.ability_panel = Panel(x=self.tab1.x + 1,
                           y=self.tab1.y + 4,
@@ -741,7 +744,6 @@ class GameScene(Screen):
         self.endurance_characteristic_value.set_text(f"{Game.player.total_endurance}")
         self.intelligence_characteristic_value.set_text(f"{Game.player.total_intelligence}")
         
-                
     def update(self):
         from src.Game import Game
         
@@ -756,5 +758,3 @@ class GameScene(Screen):
             self.update_location_info(None)
             self.update_inventory_info(None)
             self.control_activities.set_selection(0)
-            
-        

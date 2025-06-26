@@ -67,6 +67,10 @@ class Player(EventListener, Computable, Serializable):
         
         for char in RegistryRace.get_json_view()[race_id]['race_chars']:
             setattr(self, f"base_{char}", RegistryRace.get_json_view()[race_id]['race_chars'][char])
+            
+        self.health = self.max_health
+        self.energy = self.max_energy
+        self.astrum = self.max_astrum
         
         self.emit_event("player_race_set", {"race_id": race_id})
             
