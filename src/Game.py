@@ -206,7 +206,7 @@ class Game:
         Args:
             location_id: ID локации
         """
-        return RegistryLocation.get_by_id(location_id)
+        return RegistryLocation.get_instance().get_by_id(location_id)
     
     @classmethod
     def get_item_by_id(cls, item_id: str):
@@ -216,7 +216,7 @@ class Game:
         Args:
             item_id: ID предмета
         """
-        return RegistryItems.get_by_id(item_id)
+        return RegistryItems.get_instance().get_by_id(item_id)
 
     @classmethod
     def _register_entities(cls):
@@ -226,8 +226,8 @@ class Game:
         if cls.DEBUG:
             print("[INFO] Регистрация сущностей...")
         for name, registry in cls.entity_registry.items():
-            registry.load_to_json()
-            setattr(cls, name, registry.get_json_view())
+            registry.get_instance().load_to_json()
+            setattr(cls, name, registry.get_instance().get_json_view())
         if cls.DEBUG:
             print("[INFO] Сущности зарегистрированы.")
             

@@ -1,31 +1,28 @@
-from typing import List
 from src.entities.interfaces.game import Location
-from src.services.backend.managers import ContentManager
-import pkgutil
-import importlib
-import inspect
+from src.services.backend.registers.Registry import Registry
 
-class RegistryLocation:
+class RegistryLocation(Registry):
     """
     Регистратор локаций
     """
-    _content_manager = ContentManager().get_instance()
-    _json_view = {}
     
-    locations: List[Location] = []
-    locations_dir = _content_manager.get_modules("locations")
+    _instance = None
     
-    for locations_dir in locations_dir:
-        for finder, name, ispkg in pkgutil.walk_packages(locations_dir.__path__, locations_dir.__name__ + "."):
-            module = importlib.import_module(name)
-            for _, obj in inspect.getmembers(module, inspect.isclass):
-                if issubclass(obj, Location) and obj is not Location:
-                    locations.append(obj())
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+    
+    
+    def __init__(self):
+        super().__init__()
         
-    @staticmethod
-    def load_to_json():
-        for location in RegistryLocation.locations:
-            RegistryLocation._json_view[location.id] = {
+        self.setup_entities(Location, "locations")
+      
+    def load_to_json(self):
+        for location in self.locations:
+            self._json_view[location.id] = {
                 "id": location.id,
                 "name": location.name,
                 "description": location.description,
@@ -34,40 +31,29 @@ class RegistryLocation:
                 "resources": location.resources 
             }
             
-        RegistryLocation.process_connections()
-        RegistryLocation.process_resources()
-            
-    @staticmethod
-    def get_json_view():
-        return RegistryLocation._json_view
+        self.process_connections()
+        self.process_resources()
     
-    @staticmethod
-    def get_by_id(id: str):
-        return RegistryLocation._json_view.get(id, None)
-    
-    
-    @staticmethod
-    def process_resources():
-        for location in RegistryLocation._json_view:    
+    def process_resources(self):
+        for location in self._json_view:    
             _data = {}
-            for x in RegistryLocation._json_view[location]["resources"]:
+            for x in self._json_view[location]["resources"]:
                 _data[x] = {
                     "id": x,
-                    "amount": RegistryLocation._json_view[location]["resources"][x]["amount"],
+                    "amount": self._json_view[location]["resources"][x]["amount"],
                 }
             
-            RegistryLocation._json_view[location]["resources"] = _data
+            self._json_view[location]["resources"] = _data
     
-    @staticmethod
-    def process_connections():
-        for location in RegistryLocation._json_view:
+    def process_connections(self):
+        for location in self._json_view:
             _data = {}
-            for x in RegistryLocation._json_view[location]["connections"]:
-                loc = RegistryLocation.get_by_id(x)
+            for x in self._json_view[location]["connections"]:
+                loc = self.get_by_id(x)
                 _data[x] = {
                     "id": x,
                     "name": loc['name'],
                     "level": loc['connections'][location]['level']
                 }
             
-            RegistryLocation._json_view[location]["connections"] = _data
+            self._json_view[location]["connections"] = _data

@@ -127,7 +127,7 @@ class NewGameScene(Screen):
     def update_race(self, data: dict = None):
         from src.services.backend.registers import RegistryRace
         
-        race = RegistryRace.get_json_view()[data['value']]
+        race = RegistryRace.get_instance().get_json_view()[data['value']]
         
         self.new_player_data['race'] = race['id']
         
@@ -199,7 +199,7 @@ class NewGameScene(Screen):
         race_selector_y = name_input_y + self.name_input.height + 1
         
         opts = []
-        races = RegistryRace.get_json_view()
+        races = RegistryRace.get_instance().get_json_view()
         for race in races:
             opts.append((race, races[race]['name']))
         

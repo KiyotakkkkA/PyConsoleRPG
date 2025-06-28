@@ -65,8 +65,10 @@ class Player(EventListener, Computable, Serializable):
         from src.services.backend.registers import RegistryRace
         self.race = race_id
         
-        for char in RegistryRace.get_json_view()[race_id]['race_chars']:
-            setattr(self, f"base_{char}", RegistryRace.get_json_view()[race_id]['race_chars'][char])
+        race_instance = RegistryRace.get_instance()
+        
+        for char in race_instance.get_json_view()[race_id]['race_chars']:
+            setattr(self, f"base_{char}", race_instance.get_json_view()[race_id]['race_chars'][char])
             
         self.health = self.max_health
         self.energy = self.max_energy
@@ -99,13 +101,13 @@ class Player(EventListener, Computable, Serializable):
         Args:
             resource_id: ID ресурса
         """
+        
         loc = Game.get_location_by_id(self.current_location)
         amount = loc["resources"][resource_id]["amount"]
-        loc["resources"][resource_id]["amount"] = 0
         
         Game.game_state.loc_res_meta[self.current_location] = Game.game_state.loc_res_meta.get(self.current_location, {})
         Game.game_state.loc_res_meta[self.current_location][resource_id] = {
-            'amount': loc["resources"][resource_id]["amount"],
+            'amount': 0,
         }
         
         if not Game.game_state.state['respawning_resources'].get(self.current_location):
@@ -115,7 +117,7 @@ class Player(EventListener, Computable, Serializable):
             'location_id': self.current_location,
             'resource_id': resource_id,
             'amount_after_respawn': amount,
-            'respawn_time': RegistryItems.get_json_view()[resource_id]['respawn_time'],
+            'respawn_time': RegistryItems.get_instance().get_json_view()[resource_id]['respawn_time'],
             'collected_time': time.time()
         }
         

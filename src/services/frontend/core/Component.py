@@ -153,6 +153,30 @@ class Component(Computable):
         if event_name in self.event_handlers:
             for handler in self.event_handlers[event_name]:
                 handler(data)
+    
+    def cleanup(self):
+        """Полная очистка компонента перед удалением"""
+        for child in self.children[:]:
+            child.cleanup()
+        
+        self.event_handlers.clear()
+        self.key_handlers.clear()
+        
+        try:
+            from src.services.events.KeyListener import KeyListener
+            KeyListener().unregister_component(self)
+        except:
+            pass
+        
+        self.children.clear()
+        self._components.clear()
+        self._events.clear()
+        
+        self.parent = None
+        self._screen = None
+        
+        if hasattr(self, '_cache'):
+            self._cache.clear()
                 
     def add_children(self, children: List['Component'], names: List[str] = None):
         """
@@ -212,6 +236,7 @@ class Component(Computable):
         """
         self.children.remove(child)
         child.parent = None
+        child._screen = None
         
     def get_child_by_name(self, name: str):
         """

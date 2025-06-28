@@ -25,8 +25,6 @@ class GameScene(Screen):
         
         self.current_selector = None
         
-        self.temp_items_activities = []
-        
         self.current_display = 'chars'
         
         self.bind_key(Keys.F1, self.toggle_performance_monitor)
@@ -240,146 +238,231 @@ class GameScene(Screen):
         text = Text(self.help_panel.x + 1, self.help_panel.y, "↑↓: Навигация, Tab: Переключение вкладок, Enter: Подтвердить, Esc: Назад, F1: Монитор производительности, ←→: Переключение активных панелей", Color.BRIGHT_BLACK, Color.RESET)
         self.help_panel.add_child(text)
         
-    def set_connections_main(self): # Вкладка локации - Перемещения
+    def set_connections_main(self):  # Вкладка локации - Перемещения
         from src.Game import Game
+        
+        # Получаем данные один раз
+        location_data = Game.game_state.computable["current_location_data"]()
+        conns = location_data["connections"]
+        player_level = Game.player.current_level
         
         connections = []
         gap = 1
-        conns = Game.game_state.computable["current_location_data"]()["connections"]
-        player_level = Game.player.current_level
+        base_x = self.main_connections.x + 1
+        base_y = self.main_connections.y
         
-        for connection in conns:
+        for connection_id in conns:
+            connection_data = conns[connection_id]
+            level_req = connection_data.get('level')
+            has_required_level = not level_req or level_req <= player_level
             
-            errors: List[Text] = []
+            main_text = self.temp_main_connections_for_text.get(
+                "{}".format(connection_id),
+                Text(base_x, base_y + gap, 
+                connection_data["name"], 
+                Color.WHITE if has_required_level else Color.BRIGHT_BLACK, 
+                Color.RESET)
+            )
+            connections.append(main_text)
+            gap += 1
             
-            reqs = {
-                'level': {
-                    'req': lambda req=conns[connection]['level']: req,
-                    'complete': lambda req=conns[connection]['level']: not req or req <= player_level,
-                    'error': lambda req=conns[connection]['level']: f"Необходим уровень: {req}"
-                }
-            }
-            
-            text = Text(self.main_connections.x + 1, self.main_connections.y + gap, conns[connection]["name"], Color.WHITE, Color.RESET)
-            
-            if not reqs['level']['complete']():
-                errors.append(Text(self.main_connections.x + 1, self.main_connections.y + gap + 1, "  [!] " + reqs['level']['error'](), Color.BRIGHT_RED, Color.RESET))
-            
-            text.fg_color = Color.BRIGHT_BLACK if errors else Color.WHITE
-            
-            gap += len(errors) + 1
-            
-            connections.append(text)
-            connections.extend(errors)
+            if not has_required_level:
+                error_text = self.temp_main_connections_for_text.get(
+                    "{}".format(connection_id),
+                    Text(base_x, base_y + gap,
+                    f"  [!] Необходим уровень: {level_req}",
+                    Color.BRIGHT_RED, Color.RESET)
+                )
+                connections.append(error_text)
+                gap += 1
         
         self.main_connections.set_children(connections)
         
-    def set_resources_main(self): # Вкладка локации - Ресурсы
+        for text in self.temp_main_connections_for_text.values():
+            del text
+        
+        self.temp_main_connections_for_text.clear()
+
+
+    def set_resources_main(self):  # Вкладка локации - Ресурсы (+ события респавна ресурса)
         from src.Game import Game
         
-        resources = []
-        gap = 1
-        res = Game.game_state.computable["current_location_data"]()["resources"]
-        loc_id = Game.game_state.computable["current_location_data"]()["id"]
+        location_data = Game.game_state.computable["current_location_data"]()
+        res_dict = location_data["resources"]
+        loc_id = location_data["id"]
         player_level = Game.player.current_level
+        current_time = time.time()
         
-        for resource in res:
+        loc_res_meta = Game.game_state.loc_res_meta.get(loc_id, {})
+        respawning_resources = Game.game_state.state.get('respawning_resources', {}).get(loc_id, {})
+        
+        resources = []
+        respawned = []
+        gap = 1
+        base_x = self.resources_panel.x + 1
+        base_y = self.resources_panel.y
+        
+        for resource_id in res_dict:
+            resource_config = res_dict[resource_id]
+            res_data = Game.get_item_by_id(resource_id)
             
-            res_data = Game.get_item_by_id(resource)
+            level_req = res_data.get('level_need')
+            has_required_level = not level_req or level_req <= player_level
             
-            errors: List[Text] = []
+            amount = loc_res_meta.get(resource_id, {}).get('amount', resource_config['amount'])
             
-            reqs = {
-                'level': {
-                    'req': lambda req=res_data['level_need']: req,
-                    'complete': lambda req=res_data['level_need']: not req or req <= player_level,
-                    'error': lambda req=res_data['level_need']: f"Необходим уровень: {req}"
-                }
-            }
-            
-            amount = res[resource]['amount']
-            
-            text_name = Text(self.resources_panel.x + 1, self.resources_panel.y + gap, res_data["name"], Color.WHITE, Color.RESET)
-            text_count = Text(text_name.x + text_name.width + 1, self.resources_panel.y + gap, f"[x{amount}]", Color.WHITE, Color.RESET)
-            text_rarity = Text(text_count.x + text_count.width + 1, self.resources_panel.y + gap, f"[{res_data['rarity'].value[0]}]", res_data['rarity'].value[2], Color.RESET)
-            
-            if Game.game_state.state['respawning_resources'].get(loc_id, {}).get(resource):
-                time_diff = Game.game_state.state['respawning_resources'][loc_id][resource]['respawn_time'] - (time.time() - Game.game_state.state['respawning_resources'][loc_id][resource]['collected_time'])
+            time_diff = 0
+            respawn_info = respawning_resources.get(resource_id)
+            if respawn_info:
+                time_diff = respawn_info['respawn_time'] - (current_time - respawn_info['collected_time'])
                 if time_diff <= 0:
-                    self.emit_event("resource_respawned", {"location_id": loc_id, "resource_id": resource})
-                
+                    respawned.append((resource_id, time_diff))
+            
+            is_available = has_required_level and amount > 0
+            main_color = Color.WHITE if is_available else Color.BRIGHT_BLACK
+            count_color = Color.BRIGHT_YELLOW if is_available else Color.BRIGHT_BLACK
+            rarity_color = res_data['rarity'].value[2] if is_available else Color.BRIGHT_BLACK
+            
+            current_x = base_x
+            current_y = base_y + gap
+            
+            text_name = self.temp_main_resources_for_text.get(
+                "{}_name".format(resource_id),
+                Text(current_x, current_y, res_data["name"], main_color, Color.RESET)
+            )
+            current_x += text_name.width + 1
+            
+            text_count = self.temp_main_resources_for_text.get(
+                "{}_count".format(resource_id),
+                Text(current_x, current_y, f"[x{amount}]", count_color, Color.RESET)
+            )
+            current_x += text_count.width + 1
+            
+            text_rarity = self.temp_main_resources_for_text.get(
+                "{}_rarity".format(resource_id),
+                Text(current_x, current_y, f"[{res_data['rarity'].value[0]}]", rarity_color, Color.RESET)
+            )
+            
+            resources.extend([text_name, text_count, text_rarity])
+            gap += 1
+            
+            error_text = None
+            level_error = None
+            
             if amount <= 0:
-                errors.append(Text(self.resources_panel.x + 1, self.resources_panel.y + gap + 1, "  " + f"ЗАКОНЧИЛСЯ - восстановится через {time_diff:.2f} сек.", Color.BRIGHT_RED, Color.RESET))
+                error_text = self.temp_main_resources_for_text.get(
+                    "{}_error".format(resource_id),
+                    Text(base_x, base_y + gap,
+                    f"  ЗАКОНЧИЛСЯ - восстановится через {time_diff:.2f} сек.",
+                    Color.BRIGHT_RED, Color.RESET)
+                )
+                resources.append(error_text)
+                gap += 1
             
-            if not reqs['level']['complete']():
-                errors.append(Text(self.resources_panel.x + 1, self.resources_panel.y + gap + 1, "  [!] " + reqs['level']['error'](), Color.BRIGHT_RED, Color.RESET))
-            
-            text_name.fg_color = Color.BRIGHT_BLACK if errors or amount <= 0 else Color.WHITE
-            text_count.fg_color = Color.BRIGHT_BLACK if errors or amount <= 0 else Color.BRIGHT_YELLOW
-            text_rarity.fg_color = Color.BRIGHT_BLACK if errors or amount <= 0 else res_data['rarity'].value[2]
-            
-            gap += len(errors) + 1
-            
-            resources.append(text_name)
-            resources.append(text_count)
-            resources.append(text_rarity)
-            resources.extend(errors)
+            if not has_required_level:
+                level_error = self.temp_main_resources_for_text.get(
+                    "{}_level_error".format(resource_id),
+                    Text(base_x, base_y + gap,
+                    f"  [!] Необходим уровень: {level_req}",
+                    Color.BRIGHT_RED, Color.RESET)
+                )
+                resources.append(level_error)
+                gap += 1
+
+            del res_data
         
         if not resources:
-            resources.append(Text(self.resources_panel.x + 1, self.resources_panel.y + 1, "Пусто...", Color.BRIGHT_BLACK, Color.RESET))
+            empty_text = self.temp_main_resources_for_text.get(
+                "empty_text",
+                Text(base_x, base_y + 1, "Пусто...", Color.BRIGHT_BLACK, Color.RESET)
+            )
+            resources.append(empty_text)
         
         self.resources_panel.set_children(resources)
         
-    def set_connections_control(self): # Панель навигации - перемещения
+        for resource in resources:
+            del resource
+        
+        for resource_id, _ in respawned:
+            self.emit_event("resource_respawned", {"location_id": loc_id, "resource_id": resource_id})
+            
+        for text in self.temp_main_resources_for_text.values():
+            del text
+        
+        self.temp_main_resources_for_text.clear()
+
+
+    def set_connections_control(self):  # Панель навигации - перемещения
         from src.Game import Game
         
-        self.temp_items_activities = []
-        data = Game.game_state.computable["current_location_data"]()
+        self.temp_items_activities.clear()
         
-        conns = data["connections"]
-        
+        location_data = Game.game_state.computable["current_location_data"]()
+        conns = location_data["connections"]
         player_level = Game.player.current_level
         
-        for connection in conns:            
-            reqs = {
-                'level': {
-                    'req': lambda req=conns[connection]['level']: req,
-                    'complete': lambda req=conns[connection]['level']: not req or req <= player_level,
-                }
-            }
-            if not reqs['level']['complete'](): continue
-            self.temp_items_activities.append(((f"Идти в: {conns[connection]['name']}", Color.WHITE), None, lambda conn=conns[connection]['id']: self.game_move_to_location(conn)))
+        def create_move_callback(connection_id):
+            return lambda: self.game_move_to_location(connection_id)
         
-    def set_resources_control(self): # Панель навигации - ресурсы
+        for connection_id in conns:
+            connection_data = conns[connection_id]
+            level_req = connection_data.get('level')
+            
+            if level_req and level_req > player_level:
+                continue
+                
+            callback = create_move_callback(connection_data['id'])
+            self.temp_items_activities.append((
+                (f"Идти в: {connection_data['name']}", Color.WHITE), 
+                None, 
+                callback
+            ))
+
+    def set_resources_control(self):  # Панель навигации - ресурсы
         from src.Game import Game
         
-        data = Game.game_state.computable["current_location_data"]()
-        _tmp = []
-        
-        res = data["resources"]
+        location_data = Game.game_state.computable["current_location_data"]()
+        res_dict = location_data["resources"]
+        loc_id = location_data['id']
         player_level = Game.player.current_level
+        
+        loc_res_meta = Game.game_state.loc_res_meta.get(loc_id, {})
         
         start_len = len(self.temp_items_activities)
+        resource_activities = []
         
-        for resource in res:
-            
-            res_data = Game.get_item_by_id(resource)
-            
-            reqs = {
-                'level': {
-                    'req': lambda req=res_data['level_need']: req,
-                    'complete': lambda req=res_data['level_need']: not req or req <= player_level,
-                }
-            }
-            if not reqs['level']['complete']() or res[resource]['amount'] <= 0: continue
-            _tmp.append(((f"Собрать: {res_data['name']} [x{res[resource]['amount']}]", Color.WHITE), None, lambda res=resource: self.game_collect_resource(res)))
-            
-        end_len = len(self.temp_items_activities) + len(_tmp)
+        def create_collect_callback(resource_id):
+            return lambda: self.game_collect_resource(resource_id)
         
-        if start_len != end_len:
-            self.temp_items_activities.append((SeparatorItem("-", 0, Color.BRIGHT_BLACK), None, None))
+        for resource_id in res_dict:
+            resource_config = res_dict[resource_id]
+            res_data = Game.get_item_by_id(resource_id)
+            
+            amount = loc_res_meta.get(resource_id, {}).get('amount', resource_config['amount'])
+            
+            level_req = res_data.get('level_need')
+            has_required_level = not level_req or level_req <= player_level
+            
+            if has_required_level and amount > 0:
+                callback = create_collect_callback(resource_id)
+                resource_activities.append((
+                    (f"Собрать: {res_data['name']} [x{amount}]", Color.WHITE), 
+                    None, 
+                    callback
+                ))
+                
+            del res_data
         
-        self.control_activities.set_items(self.temp_items_activities + _tmp)
+        if resource_activities and start_len < len(self.temp_items_activities) + len(resource_activities):
+            self.temp_items_activities.append((
+                SeparatorItem("-", 0, Color.BRIGHT_BLACK), None, None
+            ))
+        
+        all_activities = self.temp_items_activities + resource_activities
+        self.control_activities.set_items(all_activities)
+        
+        for resource in resource_activities:
+            del resource
         
     def set_player_panel(self): # Панель навигации - панель игрока
         from src.Game import Game
@@ -579,6 +662,11 @@ class GameScene(Screen):
         self.tab3.add_child(self.inventory_table)
     
     def init(self):
+        self.temp_items_activities = []
+        
+        self.temp_main_resources_for_text = {}
+        self.temp_main_connections_for_text = {}
+        
         self.with_redirect_to_dialog_window_preset("Вернуться в главное меню?", (self.get_w() // 2 - 40 // 2, self.get_h() // 2 - 25), (40, 7), Color.BRIGHT_YELLOW)
         
         self.set_control_panel()
@@ -665,14 +753,21 @@ class GameScene(Screen):
     def update_resources_count(self, data=None):
         from src.Game import Game
         
+        if not Game.game_state.state['respawning_resources'].get(data['location_id']):
+            return
+        
         loc = Game.game_state.state['respawning_resources'][data['location_id']][data['resource_id']]
         Game.game_state.loc_res_meta[data['location_id']][data['resource_id']]['amount'] = loc['amount_after_respawn']
         Game.get_location_by_id(data['location_id'])['resources'][data['resource_id']]['amount'] = loc['amount_after_respawn']
         
         del Game.game_state.state['respawning_resources'][data['location_id']][data['resource_id']]
         
-        self.update_location_info(None)
+        if len(Game.game_state.state['respawning_resources'][data['location_id']]) == 0:
+            del Game.game_state.state['respawning_resources'][data['location_id']]
         
+        self.set_resources_main()
+        self.set_connections_control()
+        self.set_resources_control()
         
     def update_location_info(self, data):
         from src.Game import Game
@@ -750,7 +845,7 @@ class GameScene(Screen):
         self.set_player_panel()
         self.update_player_characteristics_info()
         
-        if Game.game_state.state['respawning_resources']:
+        if len(Game.game_state.state['respawning_resources']) > 0:
             self.set_resources_main()
         
         if self.first_mounted < 2:

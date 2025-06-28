@@ -59,8 +59,8 @@ class Panel(Component):
             children: Список новых компонентов, которые нужно установить.
         """
         for child in self.children:
-            child.parent = None
-        
+            child.cleanup()
+            
         self.children.clear()
         self._components.clear()
         
