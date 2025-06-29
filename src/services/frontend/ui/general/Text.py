@@ -12,7 +12,7 @@ class Text(Component):
     def __init__(self, x: int, y: int, text: str = "", 
                  fg_color: str = Color.WHITE, bg_color: str = Color.RESET,
                  paddings: tuple = (0, 0, 0, 0),
-                 auto_break: bool = False,
+                 auto_resize: bool = False,
                  max_width: int = None):
         """
         Инициализация компонента Text
@@ -24,21 +24,18 @@ class Text(Component):
             fg_color: Цвет текста (по умолчанию Color.WHITE)
             bg_color: Цвет фона (по умолчанию Color.RESET)
             paddings: (pt, pb, pr, pl) по умолчанию (0, 0, 0, 0)
-            auto_break: Автоматическое перенос строк (по умолчанию False)
+            auto_resize: Автоматическое перенос строк (по умолчанию False)
             max_width: Максимальная ширина компонента (по умолчанию None)
         """
         lines = text.split('\n')
         width = max([len(line) for line in lines]) if lines else 0
         height = len(lines)
         
-        super().__init__(x, y, width, height, paddings)
+        super().__init__(x, y, width, height, paddings, auto_resize, max_width)
         
         self.reactive('text', text)
         self.reactive('fg_color', fg_color)
         self.reactive('bg_color', bg_color)
-        
-        self.reactive('auto_break', auto_break)
-        self.reactive('max_width', max_width)
         
         self.lines: List[str] = []
         self.process_text()
@@ -47,7 +44,7 @@ class Text(Component):
         """
         Обработка текста и разделение его на строки
         """
-        if self.auto_break:
+        if self.auto_resize:
             _lines = []
             _words = self.text.replace('\n', ' ').split(' ')
             

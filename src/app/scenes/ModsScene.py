@@ -1,14 +1,15 @@
 from src.services.frontend.core import Screen, Alignment
-from src.services.frontend.ui.containers import Panel, DialogWindow, Table
+from src.services.frontend.ui.containers import Panel, Table
 from src.services.frontend.ui.general import Text
 from src.services.events import Keys
 from src.services.output import Color
 from src.services.utils import ToArtConverter
-import os
-import json
-import time
+from src.services.backend.managers import ContentManager
 
 class ModsScene(Screen):
+    
+    _content_manager = ContentManager.get_instance()
+    
     def __init__(self):
         super().__init__()
         self.performance_vision = True
@@ -66,13 +67,14 @@ class ModsScene(Screen):
         self.find_mods()
         
     def find_mods(self):
-        from src.services.backend.managers import ContentManager
-        
-        content = ContentManager().get_instance().get_content()
+        content = self._content_manager.get_content()
         
         _mods = []
         _colors = []
+        _keys = []
+        
         for mod in content:
+            _keys.append(mod['name'])
             _mods.append([
                 mod['name'],
                 mod['author'],
@@ -87,7 +89,7 @@ class ModsScene(Screen):
                 (Color.BRIGHT_GREEN, Color.RESET),
             ])
         
-        self.saves_table.set_rows(_mods, _colors)
+        self.saves_table.set_rows(_keys, _mods, _colors)
     
     def update(self):
         pass

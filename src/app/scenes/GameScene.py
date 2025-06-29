@@ -75,7 +75,8 @@ class GameScene(Screen):
         self.action_panel.set_selected(True)
         self.control_activities.set_active(True)
         self.control_activities.set_selection(0)
-        self.inventory_table.set_active(False)
+        
+        self.update_inventory_item_description(None)
         
         self.emit_event("panel_changed", None)
         
@@ -89,7 +90,8 @@ class GameScene(Screen):
         self.action_panel.set_selected(False)
         self.control_activities.set_active(False)
         self.control_activities.flush_selection()
-        self.inventory_table.set_active(True)
+        
+        self.update_inventory_item_description(None)
         
         self.emit_event("panel_changed", None)
         
@@ -115,7 +117,9 @@ class GameScene(Screen):
                                        inactive_menu_color=Color.BRIGHT_BLACK,
                                        active_menu_color=Color.BRIGHT_WHITE,
                                        alignment=Alignment.LEFT,
-                                       gap=1)
+                                       gap=1,
+                                       auto_resize=True,
+                                       max_width=self.action_panel.width - 4)
         
         self.player_panel_y = self.action_panel.y + self.action_panel.height + 1
         self.player_panel = Panel(self.action_panel.x,
@@ -283,7 +287,6 @@ class GameScene(Screen):
         
         self.temp_main_connections_for_text.clear()
 
-
     def set_resources_main(self):  # Вкладка локации - Ресурсы (+ события респавна ресурса)
         from src.Game import Game
         
@@ -391,7 +394,6 @@ class GameScene(Screen):
         
         self.temp_main_resources_for_text.clear()
 
-
     def set_connections_control(self):  # Панель навигации - перемещения
         from src.Game import Game
         
@@ -454,15 +456,48 @@ class GameScene(Screen):
             del res_data
         
         if resource_activities and start_len < len(self.temp_items_activities) + len(resource_activities):
-            self.temp_items_activities.append((
+            resource_activities.insert(0, (
                 SeparatorItem("-", 0, Color.BRIGHT_BLACK), None, None
             ))
         
-        all_activities = self.temp_items_activities + resource_activities
-        self.control_activities.set_items(all_activities)
+        self.temp_items_activities = self.temp_items_activities + resource_activities
+        self.control_activities.set_items(self.temp_items_activities)
         
         for resource in resource_activities:
             del resource
+    
+    def set_npcs_control(self):
+        from src.Game import Game
+        
+        location_data = Game.game_state.computable["current_location_data"]()
+        npcs_dict = location_data["npcs"]
+        
+        start_len = len(self.temp_items_activities)
+        npcs_activities = []
+        
+        def create_npc_callback(npc_id):
+            return lambda: print(npc_id)
+        
+        for npc_id in npcs_dict:
+            npc_data = Game.get_npc_by_id(npc_id)
+            
+            callback = create_npc_callback(npc_id)
+            npcs_activities.append((
+                (f"Говорить с: {npc_data['name']}", Color.WHITE), 
+                None, 
+                callback
+            ))
+            
+        if npcs_activities and start_len < len(self.temp_items_activities) + len(npcs_activities):
+            npcs_activities.insert(0, (
+                SeparatorItem("-", 0, Color.BRIGHT_BLACK), None, None
+            ))
+        
+        self.temp_items_activities = self.temp_items_activities + npcs_activities
+        self.control_activities.set_items(self.temp_items_activities)
+        
+        for npc in npcs_activities:
+            del npc
         
     def set_player_panel(self): # Панель навигации - панель игрока
         from src.Game import Game
@@ -659,7 +694,16 @@ class GameScene(Screen):
             (Color.YELLOW, Color.RESET),
         ], Alignment.CENTER, Alignment.LEFT, add_numeration=True, max_rows=10)
         
+        self.inventory_item_description_panel = Panel(self.tab3.x + 2, self.inventory_table.y + self.inventory_table.height + 1, self.tab3.width - 4, 0, " Описание ", " ", Alignment.LEFT, border_color=Color.BRIGHT_BLACK, border_color_selected=Color.BRIGHT_BLACK, title_color=Color.YELLOW)
+        self.inventory_item_description = Text(self.inventory_item_description_panel.x + 2, self.inventory_item_description_panel.y + 1, "dsfsdfsfd " * 40, Color.BRIGHT_BLACK, Color.RESET, auto_resize=True, max_width=self.inventory_item_description_panel.width - 6)
+        
+        self.inventory_item_description_panel.add_child(self.inventory_item_description)
+        
         self.tab3.add_child(self.inventory_table)
+        self.tab3.add_child(self.inventory_item_description_panel)
+        
+        self.inventory_table.connect_to_tab(self.tab, "inventory")
+        self.inventory_table.connect_to_panel(self.main_panel)
     
     def init(self):
         self.temp_items_activities = []
@@ -735,6 +779,7 @@ class GameScene(Screen):
         self.on_event("player_move", self.update_location_info)
         self.on_event("player_collect_resource", self.update_inventory_info)
         self.on_event("resource_respawned", self.update_resources_count)
+        self.on_event(f"{self.inventory_table.id}_row_selected", self.update_inventory_item_description)
         
         self.tab.disable_tab(2)
         self.tab.disable_tab(4)
@@ -768,6 +813,7 @@ class GameScene(Screen):
         self.set_resources_main()
         self.set_connections_control()
         self.set_resources_control()
+        self.set_npcs_control()
         
     def update_location_info(self, data):
         from src.Game import Game
@@ -786,6 +832,7 @@ class GameScene(Screen):
         self.set_resources_main()
         self.set_connections_control()
         self.set_resources_control()
+        self.set_npcs_control()
         self.set_player_panel()
         
     def update_inventory_info(self, data):
@@ -797,6 +844,8 @@ class GameScene(Screen):
         
         _temp_rows = []
         _temp_colors = []
+        _temp_actions = []
+        _temp_keys = []
         
         for item in inv:
             
@@ -807,6 +856,8 @@ class GameScene(Screen):
             amount = inv[item]["amount"]
             price = _res_data["price"]
             weight = _res_data["weight"]
+            
+            _temp_keys.append(item)
         
             _temp_rows.append([
                 _res_data["name"],
@@ -827,9 +878,29 @@ class GameScene(Screen):
             (Color.WHITE, Color.RESET),
         ])
         
-        self.inventory_table.set_rows(_temp_rows, _temp_colors)
+        self.inventory_table.set_rows(_temp_keys, _temp_rows, _temp_colors, _temp_actions)
+        
+        self.update_inventory_item_description(None)
         
         self.update_location_info(data)
+        
+    def update_inventory_item_description(self, data):
+        from src.Game import Game
+        
+        if not data:
+            self.inventory_item_description_panel.set_visible(False)
+            self.inventory_item_description.set_visible(False)
+            return
+        
+        self.inventory_item_description_panel.set_visible(True)
+        self.inventory_item_description.set_visible(True)
+        
+        self.inventory_item_description_panel.set_y(self.inventory_table.y + self.inventory_table.height + 1)
+        self.inventory_item_description.set_y(self.inventory_item_description_panel.y + 1)
+        
+        item = Game.get_item_by_id(data[-1])
+        
+        self.inventory_item_description.set_text(item['description'])
         
     def update_player_characteristics_info(self):
         from src.Game import Game

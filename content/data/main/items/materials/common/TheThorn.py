@@ -4,7 +4,7 @@ from src.entities.interfaces.game.Item import Rarity
 class TheThorn(Material):
     def __init__(self):
         super().__init__()
-        self.id = "the_thorn"
+        self.id = "main_the_thorn"
         
         self.name = "Колючник"
         

@@ -1,5 +1,5 @@
 from src.services.backend.registers import RegistryLocation, RegistryRegion, RegistryItems, \
-    RegistryRace
+    RegistryRace, RegistryNPC
 from src.entities.models import Player
 from src.entities.interfaces import Serializable
 from src.app.scenes import MainScene, \
@@ -9,6 +9,7 @@ from src.app.scenes import MainScene, \
 from src.services.frontend.core import ScreenManager, AudioManager
 from src.services.backend.managers import GlobalMetadataManager, LocaleManager, ContentManager
 from src.config.Config import Config
+from src.services.utils import Logger
 import time
 import json
 import os
@@ -54,25 +55,27 @@ class Game:
     GAME_WAS_LOADED_SUCCESSFULLY = False
     CURRENT_LOADING_PLAYER = None
     
-    # Менеджеры
-    content_manager = ContentManager().get_instance()
-    screen_manager = ScreenManager().get_instance()
-    audio_manager = AudioManager().get_instance()
-    global_metadata_manager = GlobalMetadataManager().get_instance()
-    locale_manager = LocaleManager().get_instance()
+    # Регистрация сервисов
+    services = {
+        "logger": Logger
+    }
     
-    # Игрок
-    player = Player()
-    
-    # Состояние игры
-    game_state = GameState()
+    # Регистрация менеджеров
+    managers = {
+        "content_manager": ContentManager,
+        "screen_manager": ScreenManager,
+        "audio_manager": AudioManager,
+        "global_metadata_manager": GlobalMetadataManager,
+        "locale_manager": LocaleManager
+    }
     
     # Регистрация сущностей
     entity_registry = {
         "items": RegistryItems,
         "locations": RegistryLocation,
         "regions": RegistryRegion,
-        "races": RegistryRace
+        "races": RegistryRace,
+        "npcs": RegistryNPC
     }
     
     # Регистрация экранов
@@ -114,6 +117,12 @@ class Game:
                  "bg_music": ""
                  }
     }
+    
+    # Игрок
+    player = Player()
+    
+    # Состояние игры
+    game_state = GameState()
     
     # Текущий экран
     current_screen = None
@@ -217,55 +226,77 @@ class Game:
             item_id: ID предмета
         """
         return RegistryItems.get_instance().get_by_id(item_id)
+    
+    @classmethod
+    def get_npc_by_id(cls, npc_id: str):
+        """
+        Получение NPC по ID
+        
+        Args:
+            npc_id: ID NPC
+        """
+        return RegistryNPC.get_instance().get_by_id(npc_id)
+    
+    @classmethod
+    def _register_services(cls):
+        """
+        Регистрация сервисов
+        """
+        for name, service in cls.services.items():
+            setattr(cls, name, service.get_instance())
+        if cls.DEBUG:
+            cls.logger.info("Сервисы зарегистрированы.")
+    
+    @classmethod
+    def _register_managers(cls):
+        """
+        Регистрация менеджеров
+        """
+        for name, manager in cls.managers.items():
+            setattr(cls, name, manager.get_instance())
+        if cls.DEBUG:
+            cls.logger.info("Менеджеры зарегистрированы.")
 
     @classmethod
     def _register_entities(cls):
         """
         Регистрация сущностей
         """
-        if cls.DEBUG:
-            print("[INFO] Регистрация сущностей...")
         for name, registry in cls.entity_registry.items():
             registry.get_instance().load_to_json()
             setattr(cls, name, registry.get_instance().get_json_view())
         if cls.DEBUG:
-            print("[INFO] Сущности зарегистрированы.")
+            cls.logger.info("Сущности зарегистрированы.")
             
     @classmethod
     def _register_screens(cls):
         """
         Регистрация экранов
         """
-        if cls.DEBUG:
-            print("[INFO] Регистрация экранов...")
         cls.screen_manager.add_screens(cls.screens)
         if cls.DEBUG:
-            print("[INFO] Экраны зарегистрированы.")
+            cls.logger.info("Экраны зарегистрированы.")
             
     @classmethod
     def _set_audio_settings(cls):
-        if cls.DEBUG:
-            print("[INFO] Установка настроек аудио...")
         cls.audio_manager.apply_music_volume_multiplier(cls.global_metadata_manager.get_value("current_music_multiplier", 0.1))
         
     @classmethod
     def _set_lang_settings(cls):
-        if cls.DEBUG:
-            print("[INFO] Установка настроек языка...")
         cls.locale_manager.set_locale(cls.global_metadata_manager.get_value("current_lang", "ru"))
             
     @classmethod
     def _set_global_settings(cls):
-        if cls.DEBUG:
-            print("[INFO] Установка глобальных настроек...")
         cls._set_audio_settings()
         cls._set_lang_settings()
         if cls.DEBUG:
-            print("[INFO] Глобальные настройки установлены.")
+            cls.logger.info("Глобальные настройки установлены.")
         
     
     @classmethod
     def init(cls):
+        cls._register_services()
+        cls._register_managers()
         cls._set_global_settings()
         cls._register_entities()
         cls._register_screens()

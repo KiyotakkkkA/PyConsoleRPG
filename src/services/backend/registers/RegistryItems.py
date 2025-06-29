@@ -22,6 +22,7 @@ class RegistryItems(Registry):
     def load_to_json(self):
         for item in self.items:
             self._json_view[item.id] = {
+                "id": item.id,
                 "name": item.name,
                 "description": item.description,
                 "type": item.type,

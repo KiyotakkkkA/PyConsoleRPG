@@ -2,7 +2,8 @@ from src.services.frontend.core import Component
 from src.services.output import Color, Symbols
 from src.services.frontend.core.Format import Alignment
 from src.services.events import Keys
-from typing import TYPE_CHECKING, List, Tuple, Callable
+from src.services.events import EventListener
+from typing import TYPE_CHECKING, List, Tuple, Callable, override
 
 if TYPE_CHECKING:
     from src.services.frontend.core import Screen
@@ -50,11 +51,14 @@ class Table(Component):
         if self.add_numeration:
             self.headers.insert(0, "N")
             self.title_text_colors.insert(0, numeration_color)
+            
+        self.id = f"table_{hash(self)}"
         
         self.reactive('headers_data', {})
         self.reactive('rows_colors', [])
         self.reactive('rows', [])
         self.reactive('columns', [])
+        self.reactive('rows_ids', {})
         self.reactive('selected_row_color', selected_row_color)
         self.reactive('numeration_color', numeration_color)
         self.reactive('overflowing_symbol', overflowing_symbol)
@@ -67,27 +71,91 @@ class Table(Component):
         self.reactive('start_row', 0)
         self.reactive('end_row', 0)
         
+        self.reactive('rules', {
+            'panel_criteria': False,
+            'tab_criteria': False
+        })
+        
         self._events.append((Keys.UP, self.move_up))
         self._events.append((Keys.DOWN, self.move_down))
         self._events.append((Keys.ENTER, self.process_action))
         
+        self.height = 3
+        
         self.count_headers_size()
+        
+    @override
+    def set_active(self, active: bool):
+        super().set_active(active)
+        
+        if active:
+            self.set_selected_row(self.current_selected_row)
+    
+    def connect_to_tab(self, tab: 'Tab', tab_id: str, data: dict = None):
+        """
+        Подключение компонента МультиПанель к компоненту Таб
+        Панель будет активна только если активна указанная вкладка
+        
+        Args:
+            tab: Компонент Таб
+            tab_id: ID вкладки
+        """
+        EventListener().on_event("tab_changed", lambda data: self.tab_config(tab, tab_id, data))
+    
+    def connect_to_panel(self, panel: 'Panel', data: dict = None):
+        """
+        Подключение компонента МультиПанель к компоненту Панель
+        Панель будет активна только если активна указанная панель
+        
+        Args:
+            panel: Компонент Панель
+        """
+        EventListener().on_event("panel_changed", lambda data: self.panel_config(panel, data))
+        
+    def tab_config(self, tab: 'Tab', tab_id: str, data: dict = None):
+        if tab.get_active_tab().id == tab_id:
+            self.rules['tab_criteria'] = True
+        else:
+            self.rules['tab_criteria'] = False
+            
+        array = [
+            self.rules['tab_criteria'],
+            self.rules['panel_criteria']
+        ]
+        
+        self.set_active(all(array))
+            
+    def panel_config(self, panel: 'Panel', data: dict = None):
+        if panel.selected:
+            self.rules['panel_criteria'] = True
+        else:
+            self.rules['panel_criteria'] = False
+            
+        array = [
+            self.rules['tab_criteria'],
+            self.rules['panel_criteria']
+        ]
+        
+        self.set_active(all(array))
         
     def set_selected_row(self, row: int):
         self.current_selected_row = max(0, min(row, len(self.rows) - 1))
+        EventListener().emit_event("{}_row_selected".format(self.id), self.get_selected_row_data())
         
     def get_selected_row_data(self):
-        if not self.active: return None
-        return self.rows[self.current_selected_row]
+        if not self.active or len(self.rows) == 0: return None
+        _arr = self.rows[self.current_selected_row][:]
+        _arr.append(self.rows_ids[self.current_selected_row])
+        return _arr
         
     def process_action(self):
-        if not self.active: return
+        if not self.active or len(self.rows) == 0: return
         if self.current_selected_row in self.actions:
             if self.actions[self.current_selected_row]:
                 self.actions[self.current_selected_row]()
         
     def move_up(self):
-        if not self.active: return
+        if not self.active or len(self.rows) == 0: return
         self.set_selected_row(self.current_selected_row - 1)
         if self.current_selected_row < self.start_row:
             self.start_row -= 1
@@ -120,7 +188,6 @@ class Table(Component):
         column_index = 0
         total_sum = sum(len(header) + 3 for header in self.headers)
         self.width = max(total_sum + 1, self.width)
-        self.height = 3
         current_x = self.x
         
         for header in self.headers:
@@ -139,42 +206,40 @@ class Table(Component):
             current_x += true_width
             column_index += 1
             
-    def add_row(self, row: list[str], colors: list[tuple[str, str]] = [], action: Callable = None):
+    def add_row(self, key, row: list[str], colors: list[tuple[str, str]] = [], action: Callable = None):
         if self.add_numeration:
             row.insert(0, str(len(self.rows) + 1))
         if not colors:
             colors = [(Color.WHITE, Color.RESET) for _ in range(len(row))]
         self.rows.append(row)
         self.rows_colors.append(colors)
+        self.rows_ids[len(self.rows) - 1] = key
         self.end_row = min(self.max_rows, len(self.rows))
         self.total_rows_count = len(self.rows)
         self.actions[len(self.rows) - 1] = action
         
-    def add_rows(self, rows: list[list[str]] = [], colors: list[list[tuple[str, str]]] = [], actions: list[Callable] = []):
-        for i in range(len(rows)):
-            self.add_row(rows[i], colors[i], actions[i] if i < len(actions) else None)
-            
-    def set_row(self, row: int, data: list[str], colors: list[tuple[str, str]] = [], action: Callable = None):
-        if not colors:
-            colors = [(Color.WHITE, Color.RESET) for _ in range(len(data))]
-        self.rows[row] = data
-        self.rows_colors[row] = colors
-        self.actions[row] = action
+        self.height += 2
         
-    def set_rows(self, rows: list[list[str]], colors: list[list[tuple[str, str]]] = [], actions: list[Callable] = []):
+    def add_rows(self, keys: list[str], rows: list[list[str]] = [], colors: list[list[tuple[str, str]]] = [], actions: list[Callable] = []):
+        for i in range(len(rows)):
+            self.add_row(keys[i], rows[i], colors[i], actions[i] if i < len(actions) else None)
+        
+    def set_rows(self, keys: list[str], rows: list[list[str]], colors: list[list[tuple[str, str]]] = [], actions: list[Callable] = []):
         self.rows = []
         self.rows_colors = []
         self.actions = {}
+        self.rows_ids = {}
+        self.height = 3
         
-        self.add_rows(rows, colors, actions)
+        self.add_rows(keys, rows, colors, actions)
         
     def draw(self, screen: 'Screen'):
         screen.draw_text(self.x, self.y, Symbols.BORDERS.TOP_LEFT + Symbols.BORDERS.TOP * (self.width - 1) + Symbols.BORDERS.TOP_RIGHT, self.border_color, Color.RESET)
         for header in range(len(self.headers)):
             screen.draw_text(self.headers_data[header]['text_x'], self.headers_data[header]['y'], f" " + self.headers[header] + " ", self.headers_data[header]['color'][0], self.headers_data[header]['color'][1])
             screen.draw_text(self.headers_data[header]['x'], self.headers_data[header]['y'], Symbols.BORDERS.RIGHT, self.border_color, Color.RESET)
-        screen.draw_text(self.x + self.width, self.y + self.height - 2, Symbols.BORDERS.RIGHT, self.border_color, Color.RESET)
-        screen.draw_text(self.x, self.y + self.height - 1, Symbols.BORDERS.BOTTOM_LEFT + Symbols.BORDERS.BOTTOM * (self.width - 1) + Symbols.BORDERS.BOTTOM_RIGHT, self.border_color, Color.RESET)
+        screen.draw_text(self.x + self.width, self.y + 3 - 2, Symbols.BORDERS.RIGHT, self.border_color, Color.RESET)
+        screen.draw_text(self.x, self.y + 3 - 1, Symbols.BORDERS.BOTTOM_LEFT + Symbols.BORDERS.BOTTOM * (self.width - 1) + Symbols.BORDERS.BOTTOM_RIGHT, self.border_color, Color.RESET)
         
         row_y = self.y + 3
         if self.total_rows_count > self.max_rows:

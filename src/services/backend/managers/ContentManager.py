@@ -1,4 +1,5 @@
 from src.config.Config import Config
+from src.services.utils import Logger
 from types import ModuleType
 import sys
 import os
@@ -8,11 +9,14 @@ class ContentManager:
     
     _instance = None
     
+    _logger = Logger().get_instance()
+    
     _types = {
         "items": "items",
         "locations": "locations",
         "regions": "regions",
-        "races": "races"
+        "races": "races",
+        "npcs": "npcs"
     }
     
     @classmethod
@@ -46,6 +50,7 @@ class ContentManager:
         return list(self.modules.get(key, None))
     
     def find_content(self):
+        self._logger.info(f"Начало поиска содержимого...")
         for entity in os.listdir(Config.DATA_DIR):
             manifest = os.path.join(Config.DATA_DIR, entity, 'manifest.json')
             

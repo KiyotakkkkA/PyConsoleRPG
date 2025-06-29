@@ -49,7 +49,9 @@ class Menu(Component):
                  control_keys: Tuple[int, int, int] = (Keys.UP, Keys.DOWN, Keys.ENTER),
                  alignment: int = Alignment.CENTER,
                  allow_sound: bool = False,
-                 selection_sound: str | None = 'selection.mp3'):
+                 selection_sound: str | None = 'selection.mp3',
+                 auto_resize: bool = False,
+                 max_width: int = None):
         """
         Инициализация компонента Меню
         
@@ -63,8 +65,10 @@ class Menu(Component):
             control_keys: Ключи для навигации
             alignment: Выравнивание пунктов меню
             selection_sound: Звук при выборе
+            auto_resize: Автоматическое перенос строк
+            max_width: Максимальная ширина компонента
         """
-        super().__init__(x, y, 0, 0, paddings)
+        super().__init__(x, y, 0, 0, paddings, auto_resize, max_width)
         
         self.reactive('active_index', -1)
         self.reactive('items', [])
@@ -143,36 +147,42 @@ class Menu(Component):
             action: Действие, выполняемое при нажатии на пункт меню
         """
         
-        current_len = len(text[0]) if isinstance(text, tuple) else len(text.text.text)
-        self.max_len_row = max(self.max_len_row, current_len)
+        if isinstance(text, SeparatorItem):
+            text.text.x = self.x + self.paddings[3]
+            text.text.y = self.y + self.paddings[0] + 1 + self.gap * len(self.items)
+            text.text.set_text(text.filler * (self.width))
+            self.items.append(text)
+            return
         
-        self.width = max(current_len, self.calculate_width())
+        menu_item = MenuItem(
+            text=Text(x=0,
+                      y=0,
+                      text=f"{text[0]} {'[' + KEYS_CODES_NAME[key.value] + ']' if key else ''}",
+                      fg_color=text[1],
+                      auto_resize=self.auto_resize,
+                      max_width=self.max_width),
+            key=key,
+            action=action
+        )
+        
+        self.width = max(menu_item.text.get_width(), self.calculate_width())
+        if self.max_width:
+            self.width = min(self.width, self.max_width)
+        
         self.height = self.paddings[0] + self.gap * len(self.items) + self.paddings[2]
         
         element_x = self.x + self.paddings[3]
         
-        if isinstance(text, SeparatorItem):
-            text.text.x = self.x + self.paddings[3]
-            text.text.y = self.y + self.paddings[0] + 1 + self.gap * len(self.items)
-            text.text.set_text(text.filler * self.max_len_row)
-            self.items.append(text)
-            return
-        
         if self.alignment == Alignment.LEFT:
             element_x = self.x + self.paddings[3]
         elif self.alignment == Alignment.RIGHT:
-            element_x = self.x + self.width - self.paddings[1] - len(text[0])
+            element_x = self.x + self.width - self.paddings[1] - menu_item.text.get_width()
         elif self.alignment == Alignment.CENTER:
-            element_x = self.x + (self.width // 2) - (len(text[0]) // 2)
+            element_x = self.x + (self.width // 2) - (menu_item.text.get_width() // 2)
         
-        menu_item = MenuItem(
-            text=Text(x=element_x,
-                      y=self.y + self.paddings[0] + 1 + self.gap * len(self.items),
-                      text=f"{text[0]} {'[' + KEYS_CODES_NAME[key.value] + ']' if key else ''}",
-                      fg_color=text[1]),
-            key=key,
-            action=action
-        )
+        menu_item.text.x = element_x
+        menu_item.text.y = self.y + self.paddings[0] + 1 + self.gap * len(self.items)
+        
         self.items.append(menu_item)
         
         for item in self.items:
@@ -182,9 +192,9 @@ class Menu(Component):
             if self.alignment == Alignment.LEFT:
                 item.text.x = self.x + self.paddings[3]
             elif self.alignment == Alignment.RIGHT:
-                item.text.x = self.x + self.width - self.paddings[1] - len(item.text.text)
+                item.text.x = self.x + self.width - self.paddings[1] - item.text.get_width()
             elif self.alignment == Alignment.CENTER:
-                item.text.x = self.x + (self.width // 2) - (len(item.text.text) // 2 + 1)
+                item.text.x = self.x + (self.width // 2) - (item.text.get_width() // 2 + 1)
         
         self.keys_to_item_indexes[key] = len(self.items) - 1
         if key:
@@ -212,13 +222,9 @@ class Menu(Component):
         self.add_items(items)
             
     def calculate_width(self):
-        return max([len(item.text.text) for item in self.items if isinstance(item, MenuItem)]) if self.items else 0
-            
-    def calculate(self):
-        self._calculate_self_size()
+        return max([item.text.get_width() for item in self.items if isinstance(item, MenuItem)]) if self.items else 0
             
     def draw(self, screen: 'Screen') -> None:
-        self.calculate()
         for i, item in enumerate(self.items):
             if self.active_index == i:
                 item.text.fg_color = self.active_menu_color

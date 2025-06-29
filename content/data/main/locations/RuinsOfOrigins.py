@@ -15,10 +15,14 @@ class RuinsOfOrigins(Location):
         }
         
         self.resources = {
-            "material_the_thorn": {
+            "material_main_the_thorn": {
                 "amount": 1
             },
-            "material_silver_lichen": {
+            "material_main_silver_lichen": {
                 "amount": 3
             }
         }
+        
+        self.npcs = [
+            "main_mystic_statue"
+        ]

@@ -116,7 +116,7 @@ class NewGameScene(Screen):
         
         self.race_info_text = Text(race_info_text_x, race_info_text_y, self._locale_manager['interface.new_game.race_info_text'], Color.BRIGHT_YELLOW, Color.RESET)
         self.race_name_text = Text(race_name_text_x, race_name_text_y, self._locale_manager['interface.new_game.race_name_text_not_selected'], Color.RESET, Color.RESET)
-        self.race_desc_text = Text(race_desc_text_x, race_desc_text_y, "", Color.BRIGHT_BLACK, Color.RESET, auto_break=True, max_width=description_panel_width - race_info_text_x - 4)
+        self.race_desc_text = Text(race_desc_text_x, race_desc_text_y, "", Color.BRIGHT_BLACK, Color.RESET, auto_resize=True, max_width=description_panel_width - race_info_text_x - 4)
         
         self.description_panel.add_child(self.race_info_text)
         self.description_panel.add_child(self.race_name_text)

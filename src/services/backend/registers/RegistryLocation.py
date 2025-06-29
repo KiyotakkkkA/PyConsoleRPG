@@ -28,7 +28,8 @@ class RegistryLocation(Registry):
                 "description": location.description,
                 "region": location.region,
                 "connections": location.connections,
-                "resources": location.resources 
+                "resources": location.resources,
+                "npcs": location.npcs
             }
             
         self.process_connections()

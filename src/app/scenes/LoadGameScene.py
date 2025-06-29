@@ -91,7 +91,10 @@ class LoadGameScene(Screen):
         _saves = []
         _colors = []
         _actions = []
+        _keys = []
+        
         for save in _data:
+            _keys.append(save)
             _saves.append([
                 save,
                 str(_data[save]['player_level']),
@@ -105,7 +108,7 @@ class LoadGameScene(Screen):
             ])
             _actions.append(lambda save=save: self.load_game(save))
         
-        self.saves_table.set_rows(_saves, _colors, _actions)
+        self.saves_table.set_rows(_keys, _saves, _colors, _actions)
         
     def load_game(self, save_name: str):
         from src.Game import Game

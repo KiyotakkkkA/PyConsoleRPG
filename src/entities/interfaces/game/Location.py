@@ -10,6 +10,7 @@ class Location:
         self._region = None
         self._connections = {}
         self._resources = {}
+        self._npcs = []
         
     @property
     def id(self):
@@ -76,4 +77,15 @@ class Location:
     @resources.setter
     def resources(self, value):
         self._resources = value
+    
+    @property
+    def npcs(self):
+        """
+        Список NPC на локации
+        """
+        return self._npcs
+    
+    @npcs.setter
+    def npcs(self, value):
+        self._npcs = value
     

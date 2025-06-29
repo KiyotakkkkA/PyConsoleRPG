@@ -4,7 +4,7 @@ from src.entities.interfaces.game.Item import Rarity
 class SilverLichen(Material):
     def __init__(self):
         super().__init__()
-        self.id = "silver_lichen"
+        self.id = "main_silver_lichen"
         
         self.name = "Серебряный лишайник"
         

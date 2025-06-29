@@ -18,7 +18,13 @@ class Component(Computable):
     
     _locale_manager = LocaleManager.get_instance()
     
-    def __init__(self, x: int, y: int, width: int, height: int, paddings: tuple = (1, 1, 1, 1)):
+    def __init__(self, x: int,
+                 y: int,
+                 width: int,
+                 height: int,
+                 paddings: tuple = (1, 1, 1, 1),
+                 auto_resize: bool = False,
+                 max_width: int = None):
         """
         Инициализация компонента
         
@@ -28,6 +34,8 @@ class Component(Computable):
             width: Ширина компонента
             height: Высота компонента
             paddings: (pt, pb, pr, pl) по умолчанию (1, 1, 1, 1)
+            auto_resize: Автоматическое перенос
+            max_width: Максимальная ширина компонента
         """
         self.event_handlers: Dict[str, Set[Callable]] = {}
         self.key_handlers: Dict[Keys, Set[Callable]] = {}
@@ -44,6 +52,8 @@ class Component(Computable):
         self.reactive('width', width)
         self.reactive('height', height)
         self.reactive('paddings', paddings)
+        self.reactive('auto_resize', auto_resize)
+        self.reactive('max_width', max_width)
         
         self.reactive('active', False)
         self.reactive('selected', False)
